@@ -5,18 +5,15 @@ import com.template.contract.UserContract
 import com.template.contract.UserContract.Companion.ID
 import com.template.states.UserState
 import net.corda.core.contracts.Command
-import net.corda.core.flows.FinalityFlow
-import net.corda.core.flows.FlowLogic
-import net.corda.core.flows.SignTransactionFlow
+import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
 object UserRegisterFlow {
-
-
-
+    @InitiatingFlow
+    @StartableByRPC
     class Initiator(private val name : String,
                     private val age : Int,
                     private val address : String,
