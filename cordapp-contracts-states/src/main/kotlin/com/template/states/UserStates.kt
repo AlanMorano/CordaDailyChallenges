@@ -18,15 +18,15 @@ Name, Age, Address, BirthDate, Status, Religion, isVerified }
 */
 
 
-data class UserState(val node : Party,
-                     val name : String,
-                     val age : Int,
-                     val address : String,
-                     val birthDate : String,
-                     val status : String,
-                     val religion : String,
-                     val isVerified : Boolean,
-                     override val linearId: UniqueIdentifier = UniqueIdentifier()):
+data class UserStates(val node : Party,
+                      val name : String,
+                      val age : Int,
+                      val address : String,
+                      val birthDate : String,
+                      val status : String,
+                      val religion : String,
+                      val isVerified : Boolean,
+                      override val linearId: UniqueIdentifier = UniqueIdentifier()):
         LinearState, QueryableState, ContractState{
 
 

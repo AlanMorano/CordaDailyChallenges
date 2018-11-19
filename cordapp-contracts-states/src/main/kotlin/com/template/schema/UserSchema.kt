@@ -8,7 +8,6 @@ import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Table
 
-object IOUSchema
 
 object UserSchema : MappedSchema(
         schemaFamily = UserSchema.javaClass,
@@ -33,7 +32,7 @@ object UserSchema : MappedSchema(
             var birthDate: String,
 
             @Column(name = "status")
-             var status: String,
+            var status: String,
 
             @Column(name = "religion")
             var religion: String,
@@ -42,7 +41,7 @@ object UserSchema : MappedSchema(
             var isVerified: Boolean,
 
             @Column(name = "linearId")
-             var linearId: UUID
+            var linearId: UUID
     ) : PersistentState() {
         // Default constructor required by hibernate.
         constructor(): this("","", 0,"","","","", false, UUID.randomUUID())
