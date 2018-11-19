@@ -1,6 +1,7 @@
 package com.template.states
 
 import com.template.schema.UserSchema
+
 import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.LinearState
 import net.corda.core.contracts.UniqueIdentifier
@@ -11,22 +12,15 @@ import net.corda.core.schemas.PersistentState
 import net.corda.core.schemas.QueryableState
 import java.util.*
 
-/*
-User State {
-Name, Age, Address, BirthDate, Status, Religion, isVerified }
-
-*/
-
-
-data class UserStates(val node : Party,
-                      val name : String,
-                      val age : Int,
-                      val address : String,
-                      val birthDate : String,
-                      val status : String,
-                      val religion : String,
-                      val isVerified : Boolean,
-                      override val linearId: UniqueIdentifier = UniqueIdentifier()):
+data class UserState(val node : Party,
+                     val name : String,
+                     val age : Int,
+                     val address : String,
+                     val birthDate : String,
+                     val status : String,
+                     val religion : String,
+                     val isVerified : Boolean,
+                     override val linearId: UniqueIdentifier = UniqueIdentifier()):
         LinearState, QueryableState, ContractState{
 
 

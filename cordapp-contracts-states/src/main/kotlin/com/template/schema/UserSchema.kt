@@ -8,9 +8,10 @@ import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Table
 
+object IOUSchema
 
 object UserSchema : MappedSchema(
-        schemaFamily = UserSchema.javaClass,
+        schemaFamily = IOUSchema.javaClass,
         version = 1,
         mappedTypes = listOf(PersistentIOU::class.java)) {
     @Entity
