@@ -17,6 +17,9 @@ object UserSchema : MappedSchema(
     @Entity
     @Table(name = "user_states")
     class PersistentIOU(
+            @Column(name = "node")
+            var node: String,
+
             @Column(name = "name")
             var name: String,
 
@@ -42,6 +45,6 @@ object UserSchema : MappedSchema(
              var linearId: UUID
     ) : PersistentState() {
         // Default constructor required by hibernate.
-        constructor(): this("", 0,"","","","", false, UUID.randomUUID())
+        constructor(): this("","", 0,"","","","", false, UUID.randomUUID())
     }
 }

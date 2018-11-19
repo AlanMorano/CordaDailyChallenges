@@ -18,10 +18,11 @@ Name, Age, Address, BirthDate, Status, Religion, isVerified }
 */
 
 
-data class UserState(val name : Party,
+data class UserState(val node : Party,
+                     val name : String,
                      val age : Int,
                      val address : String,
-                     val birthDate : Date,
+                     val birthDate : String,
                      val status : String,
                      val religion : String,
                      val isVerified : Boolean,
@@ -32,10 +33,11 @@ data class UserState(val name : Party,
     override fun generateMappedObject(schema: MappedSchema): PersistentState {
         return when (schema) {
             is UserSchema -> UserSchema.PersistentIOU(
-                    this.name.name.toString(),
+                    this.node.name.toString(),
+                    this.name,
                     this.age,
                     this.address,
-                    this.birthDate.toString(),
+                    this.birthDate,
                     this.status,
                     this.religion,
                     this.isVerified,
@@ -45,7 +47,7 @@ data class UserState(val name : Party,
         }
     }
     override fun supportedSchemas(): Iterable<MappedSchema> = listOf(UserSchema)
-    override val participants: List<AbstractParty> get() = listOf(name)
+    override val participants: List<AbstractParty> get() = listOf(node)
 
 
 
