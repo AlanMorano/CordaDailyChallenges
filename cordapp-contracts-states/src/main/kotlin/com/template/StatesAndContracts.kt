@@ -9,18 +9,56 @@ import net.corda.core.transactions.LedgerTransaction
 // ************
 class UserContract : Contract {
     companion object {
-        // Used to identify our contract when building a transaction.
         const val USER_CONTRACT_ID = "com.template.UserContract"
     }
 
     interface Commands : CommandData {
         class Register : Commands
         class Update : Commands
+        class Verify : Commands
     }
 
     override fun verify(tx: LedgerTransaction) {
+        val command = tx.getCommand<CommandData>(0)
 
+        requireThat {
+            when(command.value) {
+                is Commands.Register -> {
+
+                }
+                is Commands.Update -> {
+
+                }
+            }
+        }
     }
+}
+
+class KYCContract : Contract {
+    companion object {
+        const val KYC_CONTRACT_ID = "com.template.KYCContract"
+    }
+
+    interface Commands : CommandData {
+        class Send : Commands
+        class Validate :  Commands
+    }
+
+    override fun verify(tx: LedgerTransaction) {
+        val command =  tx.getCommand<CommandData>(0)
+
+        requireThat {
+            when(command.value) {
+                is Commands.Send -> {
+
+                }
+                is Commands.Validate -> {
+
+                }
+            }
+        }
+    }
+
 }
 
 // *********
@@ -33,6 +71,12 @@ data class UserState(val owningNode: Party,
                      val birthDate: String,
                      val status: String,
                      val religion: String,
-                     val isVerified: Boolean) : ContractState {
+                     val isVerified: Boolean = false) : ContractState {
+    override val participants = listOf(owningNode)
+}
+
+data class KYCState(val owningNode: Party,
+                    val isSent: Boolean = false,
+                    val isValidated: Boolean = false) : ContractState {
     override val participants = listOf(owningNode)
 }
