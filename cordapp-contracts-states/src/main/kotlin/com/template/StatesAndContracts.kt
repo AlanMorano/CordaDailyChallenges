@@ -50,20 +50,24 @@ class KYCContract : Contract {
         requireThat {
             when(command.value) {
                 is Commands.Send -> {
-
+                    /* Shape Constraints */
+                    "Transaction must have no input" using (tx.inputs.isEmpty())
+                    "Transaction must have one Output" using (tx.outputs.size == 1)
                 }
                 is Commands.Validate -> {
+                    /* Send Specific Constraints */
+                    "User must have already sent an ID." using tx.inRef<KYCState>(0).state.data.isSent
+                    "User must not yet be validated." using (!tx.inRef<KYCState>(0).state.data.isValidated)
 
                 }
             }
         }
     }
-
 }
 
-// *********
-// * State *
-// *********
+// **********
+// * States *
+// **********
 data class UserState(val owningNode: Party,
                      val name: String,
                      val age: Int,
