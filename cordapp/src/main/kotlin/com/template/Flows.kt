@@ -111,7 +111,7 @@ class UpdateFlow(val name: String,
         progressTracker.currentStep = BUILDING_TRANSACTION
         val inputCriteria = QueryCriteria.VaultQueryCriteria()
         val inputStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputCriteria).states.first()
-//        val input = inputStateAndRef.state.data
+        val input = inputStateAndRef.state.data
 
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         val outputState = UserState(
@@ -121,7 +121,8 @@ class UpdateFlow(val name: String,
                 address,
                 birthDate,
                 status,
-                religion)
+                religion,
+                input.isVerified)
         val cmd = Command(UserContract.Commands.Update(), ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
@@ -129,13 +130,14 @@ class UpdateFlow(val name: String,
                 .addOutputState(outputState, USER_CONTRACT_ID)
                 .addCommand(cmd)
 
+        /* Step 3 - Verify the transaction */
+        progressTracker.currentStep = VERIFY_TRANSACTION
+        txBuilder.verify(serviceHub)
+
         /* Step 2 - Sign the transaction */
         progressTracker.currentStep = SIGN_TRANSACTION
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
-        /* Step 3 - Verify the transaction */
-        progressTracker.currentStep = VERIFY_TRANSACTION
-//        signedTx.verify(serviceHub)
 
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
@@ -193,13 +195,13 @@ class VerifyFlow() : FlowLogic<Unit>() {
                 .addOutputState(outputState, USER_CONTRACT_ID)
                 .addCommand(cmd)
 
+        /* Step 3 - Verify the transaction */
+        progressTracker.currentStep = VERIFY_TRANSACTION
+        txBuilder.verify(serviceHub)
+
         /* Step 2 - Sign the transaction */
         progressTracker.currentStep = SIGN_TRANSACTION
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
-
-        /* Step 3 - Verify the transaction */
-        progressTracker.currentStep = VERIFY_TRANSACTION
-//        signedTx.verify(serviceHub)
 
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
@@ -305,16 +307,17 @@ class ValidateFlow() : FlowLogic<Unit>() {
         val cmd = Command(KYCContract.Commands.Validate(), ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
+                .addInputState(inputStateAndRef)
                 .addOutputState(outputState, KYC_CONTRACT_ID)
                 .addCommand(cmd)
 
-        /* Step 2 - Sign the transaction */
+        /* Step 2 - Verify the transaction */
+        progressTracker.currentStep = VERIFY_TRANSACTION
+        txBuilder.verify(serviceHub)
+
+        /* Step 3 - Sign the transaction */
         progressTracker.currentStep = SIGN_TRANSACTION
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
-
-        /* Step 3 - Verify the transaction */
-        progressTracker.currentStep = VERIFY_TRANSACTION
-//        signedTx.verify(serviceHub)
 
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
