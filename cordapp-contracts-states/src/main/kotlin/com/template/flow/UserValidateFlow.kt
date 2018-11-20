@@ -5,20 +5,22 @@ import com.template.contract.UserContract
 import com.template.contract.UserContract.Companion.ID
 import com.template.states.UserState
 import net.corda.core.contracts.Command
-import net.corda.core.flows.*
+import net.corda.core.flows.FinalityFlow
+import net.corda.core.flows.FlowLogic
+import net.corda.core.flows.InitiatingFlow
+import net.corda.core.flows.StartableByRPC
+import net.corda.core.node.services.queryBy
+import net.corda.core.node.services.vault.QueryCriteria
+import net.corda.core.schemas.QueryableState
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
-object UserRegisterFlow {
+object UserValidateFlow {
+
     @InitiatingFlow
     @StartableByRPC
-    class Initiator(private val name : String,
-                    private val age : Int,
-                    private val address : String,
-                    private val birthday :  String,
-                    private val status : String,
-                    private val religion : String) : FlowLogic<SignedTransaction>(){
+    class Initiator : FlowLogic<SignedTransaction>(){
 
         override val progressTracker = ProgressTracker(GETTING_NOTARY, GENERATING_TRANSACTION,
                 VERIFYING_TRANSACTION, SIGNING_TRANSACTION, FINALISING_TRANSACTION)
@@ -28,13 +30,22 @@ object UserRegisterFlow {
             progressTracker.currentStep = GETTING_NOTARY
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
-            val verification = false
 
             progressTracker.currentStep = GENERATING_TRANSACTION
-            val userState = UserState(this.ourIdentity,name,age,address,birthday,status,religion,verification)
-            val txCommand = Command(UserContract.Commands.Register(), userState.participants.map { it.owningKey })
+
+            val criteria = QueryCriteria.LinearStateQueryCriteria(participants = listOf(ourIdentity))
+            val inputState = serviceHub.vaultService.queryBy<UserState>(criteria).states.single()
+            val inputStateData = inputState.state.data
+
+            val verification = true
+            val outputState = UserState(inputStateData.node,inputStateData.name,inputStateData.age,inputStateData.address,inputStateData.birthDate,inputStateData.status,inputStateData.religion,verification)
+
+            val txCommand =
+                    Command(UserContract.Commands.Validate(),ourIdentity.owningKey)
+
             val txBuilder = TransactionBuilder(notary)
-                    .addOutputState(userState, ID)
+                    .addInputState(inputState)
+                    .addOutputState(outputState, ID)
                     .addCommand(txCommand)
 
 
@@ -54,5 +65,4 @@ object UserRegisterFlow {
         }
 
     }
-
 }
