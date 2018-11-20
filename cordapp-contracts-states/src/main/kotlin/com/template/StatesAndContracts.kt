@@ -24,10 +24,20 @@ class UserContract : Contract {
         requireThat {
             when(command.value) {
                 is Commands.Register -> {
-
+                    /* Shape Constraints */
+                    "Transaction must have no input" using (tx.inputs.isEmpty())
+                    "Transaction must have one output" using (tx.outputs.size == 1)
                 }
                 is Commands.Update -> {
+                    /* Shape Constraints */
+                    "Transaction must have one input" using (tx.inputs.size == 1)
+                    "Transaction must have one output" using (tx.outputs.size == 1)
+                }
 
+                is Commands.Verify -> {
+                    /* Shape Constraints */
+                    "Transaction must have one input" using (tx.inputs.size == 1)
+                    "Transaction must have one output" using (tx.outputs.size == 1)
                 }
             }
         }
@@ -52,13 +62,16 @@ class KYCContract : Contract {
                 is Commands.Send -> {
                     /* Shape Constraints */
                     "Transaction must have no input" using (tx.inputs.isEmpty())
-                    "Transaction must have one Output" using (tx.outputs.size == 1)
+                    "Transaction must have one output" using (tx.outputs.size == 1)
                 }
                 is Commands.Validate -> {
+                    /* Shape Constraints */
+                    "Transaction must have one input" using (tx.inputs.size == 1)
+                    "Transaction must have one output" using (tx.outputs.size == 1)
+
                     /* Send Specific Constraints */
                     "User must have already sent an ID." using tx.inRef<KYCState>(0).state.data.isSent
                     "User must not yet be validated." using (!tx.inRef<KYCState>(0).state.data.isValidated)
-
                 }
             }
         }
