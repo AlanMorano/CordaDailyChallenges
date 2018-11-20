@@ -14,7 +14,7 @@ data class UserState(val node : Party,
                      val status : String,
                      val religion : String,
                      val isVerified : Boolean,
-//                     val listOfParties : List<Party>,
+//                   val listOfParties : List<Party>,
                      override val linearId: UniqueIdentifier = UniqueIdentifier()): LinearState{
 
     override val participants = listOf(node)

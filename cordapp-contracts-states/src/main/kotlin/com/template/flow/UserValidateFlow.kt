@@ -2,7 +2,7 @@ package com.template.flow
 
 import co.paralleluniverse.fibers.Suspendable
 import com.template.contract.UserContract
-import com.template.contract.UserContract.Companion.ID
+import com.template.contract.UserContract.Companion.User_ID
 import com.template.states.UserState
 import net.corda.core.contracts.Command
 import net.corda.core.flows.FinalityFlow
@@ -45,7 +45,7 @@ object UserValidateFlow {
 
             val txBuilder = TransactionBuilder(notary)
                     .addInputState(inputState)
-                    .addOutputState(outputState, ID)
+                    .addOutputState(outputState, User_ID)
                     .addCommand(txCommand)
 
 

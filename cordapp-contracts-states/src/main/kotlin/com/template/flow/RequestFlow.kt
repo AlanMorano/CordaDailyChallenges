@@ -1,26 +1,26 @@
 package com.template.flow
 
 import co.paralleluniverse.fibers.Suspendable
-import com.template.contract.UserContract
-import com.template.contract.UserContract.Companion.User_ID
-import com.template.states.UserState
+import com.template.contract.RequestContract
+import com.template.contract.RequestContract.Companion.Request_ID
+import com.template.states.RequestState
 import net.corda.core.contracts.Command
-import net.corda.core.flows.*
+import net.corda.core.flows.FinalityFlow
+import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
+import net.corda.core.identity.Party
+
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
-object UserRegisterFlow {
+object RequestFlow {
+
     @InitiatingFlow
     @StartableByRPC
-    class Initiator(private val name : String,
-                    private val age : Int,
-                    private val address : String,
-                    private val birthday :  String,
-                    private val status : String,
-                    private val religion : String) : FlowLogic<SignedTransaction>(){
+    class Initiator (private val infoOwner: Party,
+                     private val name: String): FlowLogic<SignedTransaction>(){
 
         override val progressTracker = ProgressTracker(GETTING_NOTARY, GENERATING_TRANSACTION,
                 VERIFYING_TRANSACTION, SIGNING_TRANSACTION, FINALISING_TRANSACTION)
@@ -30,15 +30,16 @@ object UserRegisterFlow {
             progressTracker.currentStep = GETTING_NOTARY
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
-            val verification = false
 
             progressTracker.currentStep = GENERATING_TRANSACTION
-            val userState = UserState(this.ourIdentity,name,age,address,birthday,status,religion,verification)
 
-            val txCommand = Command(UserContract.Commands.Register(), userState.participants.map { it.owningKey })
-            val txBuilder = TransactionBuilder(notary)
-                    .addOutputState(userState, User_ID)
-                    .addCommand(txCommand)
+            val requestState = RequestState(infoOwner, this.ourIdentity, name)
+
+
+           val txCommand = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
+           val txBuilder = TransactionBuilder(notary)
+                   .addOutputState(requestState, Request_ID)
+                   .addCommand(txCommand)
 
 
 
@@ -57,5 +58,4 @@ object UserRegisterFlow {
         }
 
     }
-
 }
