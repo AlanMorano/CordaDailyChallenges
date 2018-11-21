@@ -18,6 +18,7 @@ class UserContract : Contract {
     interface Commands : CommandData {
         class Register : Commands
         class Update : Commands
+        class Verify : Commands
     }
     
     // A transaction is valid if the verify() function of the contract of all the transaction's input and output states
@@ -29,9 +30,22 @@ class UserContract : Contract {
         requireThat {
             when(command.value){
             is Commands.Register -> {
+                "Can't reissue an existing State" using (tx.inputs.isEmpty())
+                "Transaction must have one output" using (tx.outputs.size == 1)
+                //"Input States are signed by command Signer" using (tx.inputs.Node.owningKey in command.signers)
 
             }
             is Commands.Update ->{
+                "Transaction must have one input" using (tx.inputs.size == 1)
+                "Transaction must have one output" using (tx.outputs.size == 1)
+                //"Output States are signed by command Signer" using (tx.outputs.Node.owningKey in command.signers)
+
+
+            }
+            is Commands.Verify ->{
+                "Transaction must have one input" using (tx.inputs.size == 1)
+                "Transaction must have one output" using (tx.outputs.size == 1)
+                //"Output States are signed by command Signer" using (tx.outputs.Node.owningKey in command.signers)
 
             }}
         }

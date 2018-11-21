@@ -89,3 +89,40 @@ class UpdateFlow ( val Name: String,
     }
 
 }
+
+@InitiatingFlow
+@StartableByRPC
+class VerifyFlow () : FlowLogic<Unit>(){
+
+    override val progressTracker = ProgressTracker()
+
+    @Suspendable
+    override fun call() {
+        // Initiator flow logic goes here.
+        val criteria = QueryCriteria.VaultQueryCriteria()
+        val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.single()
+        val inputVault = Vault.state.data
+
+        // verify notary
+        val notary = serviceHub.networkMapCache.notaryIdentities.first()
+        // belong to the transaction
+        val outputState = UserState(ourIdentity,inputVault.Name,inputVault.Age,
+                inputVault.Address,inputVault.BirthDate,inputVault.Status,inputVault.Religion,true)
+        // valid or invalid in contract
+        val cmd = Command(UserContract.Commands.Verify(),ourIdentity.owningKey)
+        //add transaction Builder
+        val txBuilder = TransactionBuilder(notary)
+                .addInputState(Vault)
+                .addOutputState(outputState, User_Contract_ID)
+                .addCommand(cmd)
+        //verification of transaction
+        txBuilder.verify(serviceHub)
+        //signed by the participants
+        val signedTx = serviceHub.signInitialTransaction(txBuilder)
+        //verify signature
+        //signedTx.verify(serviceHub)
+        //finalizing signature
+        subFlow(FinalityFlow(signedTx))
+    }
+
+}
