@@ -1,6 +1,7 @@
 package com.template
 
 import net.corda.core.contracts.*
+import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
 import net.corda.core.transactions.LedgerTransaction
 
@@ -16,6 +17,7 @@ class UserContract : Contract {
         class Register : Commands
         class Update : Commands
         class Verify : Commands
+        class Disseminate : Commands
     }
 
     override fun verify(tx: LedgerTransaction) {
@@ -78,6 +80,21 @@ class KYCContract : Contract {
     }
 }
 
+class RequestContract : Contract {
+    companion object {
+        const val REQUEST_CONTRACT_ID = "com.template.RequestContract"
+    }
+
+    interface Commands : CommandData {
+        class Request : Commands
+    }
+
+    override fun verify(tx: LedgerTransaction) {
+
+    }
+
+}
+
 // **********
 // * States *
 // **********
@@ -88,12 +105,19 @@ data class UserState(val owningNode: Party,
                      val birthDate: String,
                      val status: String,
                      val religion: String,
+                     val parties: List<Party>,
                      val isVerified: Boolean = false) : ContractState {
-    override val participants = listOf(owningNode)
+    override val participants = parties
 }
 
 data class KYCState(val owningNode: Party,
                     val isSent: Boolean = false,
                     val isValidated: Boolean = false) : ContractState {
     override val participants = listOf(owningNode)
+}
+
+data class RequestState(val owningNode: Party,
+                        val requestingNode: Party,
+                        val isSent: Boolean = false) : ContractState {
+    override val participants = listOf(owningNode, requestingNode)
 }
