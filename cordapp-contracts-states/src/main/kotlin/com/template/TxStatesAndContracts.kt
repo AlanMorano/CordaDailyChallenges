@@ -19,7 +19,6 @@ class GetContract : Contract {
     // Used to indicate the transaction's intent.
     interface Commands : CommandData {
         class Request : Commands
-        class Forward : Commands
     }
 
     // A transaction is valid if the verify() function of the contract of all the transaction's input and output states
@@ -31,9 +30,6 @@ class GetContract : Contract {
         requireThat {
             when(command.value){
                 is Commands.Request ->{
-
-                }
-                is Commands.Forward ->{
 
                 }
             }

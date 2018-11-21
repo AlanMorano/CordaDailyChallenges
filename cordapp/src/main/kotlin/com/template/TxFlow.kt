@@ -19,78 +19,19 @@ class RequestFlow ( val requestName: String,
     override fun call() {
 
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
-//        val criteria = QueryCriteria.VaultQueryCriteria()
-//        val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.first()
-//        val request = serviceHub.identityService.partiesFromName(requestName,false).singleOrNull()
-//                ?: throw IllegalArgumentException("No exact match found for request $requestName")
+        // request the info to other Party by its Identity
         val requester = GetState(rParty,this.ourIdentity,requestName)
 
         val cmd = Command (GetContract.Commands.Request(), listOf(ourIdentity.owningKey))
         val txBuilder = TransactionBuilder(notary)
-                //.addInputState(Vault)
                 .addOutputState(requester, GetContract.Get_Contract_ID)
                 .addCommand(cmd)
-
+        // verify transaction
         txBuilder.verify(serviceHub)
-
+        // signed the party
         val partySigned = serviceHub.signInitialTransaction(txBuilder)
-
-//        val participantsParties = PartyState.participants.map {
-//            serviceHub.identityService.wellKnownPartyFromAnonymous(otherParty)!!
-//        }
-//        val flowSession = (participantsParties - ourIdentity).map {
-//            initiateFlow(otherParty)
-//        }
-//        val fullySigned = subFlow(CollectSignaturesFlow(partySigned,flowSession))
-
+        //finalising signature
         subFlow(FinalityFlow(partySigned))
 
     }
 }
-
-//@InitiatingFlow
-//@StartableByRPC
-//class ForwardFlow ( val crequestName: String) : FlowLogic<Unit>(){
-//
-//    override val progressTracker = ProgressTracker()
-//
-//    @Suspendable
-//    override fun call() {
-//
-//        val notary = serviceHub.networkMapCache.notaryIdentities.first()
-////        val criteria = QueryCriteria.VaultQueryCriteria()
-////        val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.first()
-//        val request = serviceHub.identityService.partiesFromName(crequestName,false).singleOrNull()
-//                ?: throw IllegalArgumentException("No exact match found for request $crequestName")
-//        val requester = GetState(ourIdentity,request,crequestName)
-////        val senderOutputState = PartyState(ourIdentity,Vault.state.data.Node)
-////        val receiverOutputState = PartyState(otherParty,ourIdentity)
-//        val user = serviceHub.vaultService.queryBy<UserState>().states
-//        val userRef = user.find { stateAndRef -> stateAndRef.state.data.isVerified  }
-//        val outputUser  = userRef.state.data
-//
-//        val cmd = Command (GetContract.Commands.Request(), ourIdentity.owningKey)
-//        val txBuilder = TransactionBuilder(notary)
-//                //.addInputState(Vault)
-//                //.addInputState(userRef)
-//                .addOutputState(requester, GetContract.Get_Contract_ID)
-//                .addCommand(cmd)
-//
-//        txBuilder.verify(serviceHub)
-//
-//        val partySigned = serviceHub.signInitialTransaction(txBuilder)
-//        //val otherPartyFlow = initiateFlow(otherParty)
-//
-////        val participantsParties = PartyState.participants.map {
-////            serviceHub.identityService.wellKnownPartyFromAnonymous(otherParty)!!
-////        }
-////        val flowSession = (participantsParties - ourIdentity).map {
-////            initiateFlow(otherParty)
-////        }
-////        val fullySigned = subFlow(CollectSignaturesFlow(partySigned,flowSession))
-//
-//        //val signedTx = subFlow(CollectSignaturesFlow(partySigned, setOf(otherPartyFlow)))
-//        subFlow(FinalityFlow(partySigned))
-//
-//    }
-//}
