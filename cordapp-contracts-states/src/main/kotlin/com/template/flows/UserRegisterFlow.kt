@@ -26,6 +26,7 @@ class RegisterFlow(
 
     @Suspendable
     override fun call(){
+        /* Step 1 - Build the transaction */
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         val userState =UserState(ownParty,name,age,address,birthDate,status,religion,isVerified)
         val cmd = Command(UserContract.Commands.Register(),ownParty.owningKey)
@@ -35,12 +36,12 @@ class RegisterFlow(
                 .addOutputState(userState,UserContract.ID)
                 .addCommand(cmd)
         txBuilder.verify(serviceHub)
-
+        /* Step 2 - Sign the transaction */
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
-
+        /* Step 3 - Verify the transaction */
         signedTx.verify(serviceHub)
-
+        /* Step 4 and 5 - Notarize then Record the transaction */
          subFlow(FinalityFlow(signedTx))
     }
 

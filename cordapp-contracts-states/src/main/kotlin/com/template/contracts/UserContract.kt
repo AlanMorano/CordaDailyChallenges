@@ -1,5 +1,6 @@
 package com.template.contracts
 
+import com.template.states.UserState
 import net.corda.core.contracts.CommandData
 import net.corda.core.contracts.Contract
 import net.corda.core.contracts.requireThat
@@ -13,14 +14,27 @@ class UserContract : Contract {
     interface Commands : CommandData{
         class Register : Commands
         class Update : Commands
+        class Validate : Commands
     }
 
     override fun verify(tx: LedgerTransaction){
         val command = tx.getCommand<CommandData>(0)
         requireThat {
             when(command.value){
-                is Commands.Register -> {}
-                is Commands.Update -> {}
+                is Commands.Register -> {
+                    "No inputs should be consumed when issuing an IOU." using (tx.inputs.isEmpty())
+                    "Only one output state should be creating a record" using (tx.outputs.size == 1)
+                    "Output must be a TokenState" using (tx.getOutput(0) is UserState)
+                }
+                is Commands.Update -> {
+                    "Transaction must have one input" using (tx.inputs.size == 1)
+                    "Transaction must have one output" using (tx.outputs.size == 1)
+                }
+                is Commands.Validate ->{
+                    "Transaction must have one input" using (tx.inputs.size == 1)
+                    "Transaction must have one output" using (tx.outputs.size == 1)
+
+                }
             }
         }
     }
