@@ -21,6 +21,7 @@ class ValidateFlow : FlowLogic<Unit>(){
     override val progressTracker = ProgressTracker()
     @Suspendable
     override fun call(){
+        /* Step 1 - Build the transaction */
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         val criteria = QueryCriteria.VaultQueryCriteria()
@@ -29,9 +30,9 @@ class ValidateFlow : FlowLogic<Unit>(){
 
         val inputStateData = inputState.state.data
 
-        val verification = true
+//        val verification = true
 
-        val userState = UserState(ourIdentity,inputStateData.name,inputStateData.age,inputStateData.address,inputStateData.birthDate,inputStateData.status,inputStateData.religion, listOf(ourIdentity))
+        val userState = UserState(ourIdentity,inputStateData.name,inputStateData.age,inputStateData.address,inputStateData.birthDate,inputStateData.status,inputStateData.religion,true, listOf(ourIdentity),inputStateData.linearId)
 
         val cmd = Command(UserContract.Commands.Validate(),ourIdentity.owningKey)
 

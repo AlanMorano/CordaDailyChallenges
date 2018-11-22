@@ -5,6 +5,7 @@ import com.template.contracts.UserContract.Companion.ID
 import com.template.contracts.UserContract
 import com.template.states.UserState
 import net.corda.core.contracts.Command
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.node.services.vault.QueryCriteria
@@ -28,7 +29,7 @@ class RegisterFlow(
     override fun call(){
         /* Step 1 - Build the transaction */
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
-        val userState =UserState(ownParty,name,age,address,birthDate,status,religion, listOf(ourIdentity))
+        val userState =UserState(ownParty,name,age,address,birthDate,status,religion,false, listOf(ourIdentity), UniqueIdentifier())
         val cmd = Command(UserContract.Commands.Register(),ownParty.owningKey)
 
 

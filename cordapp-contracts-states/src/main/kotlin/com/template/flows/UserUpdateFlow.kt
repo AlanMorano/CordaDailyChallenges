@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable
 import com.template.contracts.UserContract
 import com.template.states.UserState
 import net.corda.core.contracts.Command
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.FinalityFlow
 import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
@@ -13,10 +14,12 @@ import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 import org.apache.logging.log4j.core.tools.picocli.CommandLine
+import java.lang.IllegalArgumentException
 
 @InitiatingFlow
 @StartableByRPC
 class UpdateFlow(val name: String,
+
                  val age: Int,
                  val address: String,
                  val birthDate: String,
@@ -30,8 +33,19 @@ class UpdateFlow(val name: String,
         /* Step 1 - Build the transaction */
         val inputCriteria = QueryCriteria.VaultQueryCriteria()
         val inputStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputCriteria).states.first()
+
+        val input = inputStateAndRef.state.data
+//        val Name = inputStateAndRef.state.data.name
+
+//        if(name != Name){
+//            throw IllegalArgumentException("Invalid Name")
+//        }
+
+
+
+
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
-        val userState = UserState(ourIdentity,name,age,address,birthDate,status,religion, listOf(ourIdentity))
+        val userState = UserState(ourIdentity,name,age,address,birthDate,status,religion,input.isVerified, listOf(ourIdentity), input.linearId)
         val cmd = Command(UserContract.Commands.Update(),ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
