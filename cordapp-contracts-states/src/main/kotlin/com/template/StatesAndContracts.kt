@@ -63,6 +63,7 @@ data class UserState ( val Node: Party,
                        val BirthDate: String,
                        val Status: String,
                        val Religion: String,
+                       val parties: List<Party>,
                        val isVerified : Boolean = false): ContractState{
-    override val participants = listOf(Node)
+    override val participants = parties
 }

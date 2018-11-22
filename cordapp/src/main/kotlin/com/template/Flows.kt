@@ -15,14 +15,12 @@ import net.corda.core.utilities.ProgressTracker
 // *********
 @InitiatingFlow
 @StartableByRPC
-class RegisterFlow ( val Node: Party,
-                     val Name: String,
+class RegisterFlow ( val Name: String,
                      val Age: Int,
                      val Address: String,
                      val BirthDate: String,
                      val Status: String,
-                     val Religion: String,
-                     val isVerified: Boolean) : FlowLogic<Unit>() {
+                     val Religion: String) : FlowLogic<Unit>() {
 
 
     override val progressTracker = ProgressTracker()
@@ -33,9 +31,9 @@ class RegisterFlow ( val Node: Party,
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         // belong to the transaction
-        val outputState = UserState(Node,Name, Age, Address, BirthDate,Status, Religion, isVerified)
+        val outputState = UserState(ourIdentity,Name, Age, Address, BirthDate,Status, Religion, listOf(ourIdentity))
         // valid or invalid in contract
-        val cmd = Command(UserContract.Commands.Register(),Node.owningKey)
+        val cmd = Command(UserContract.Commands.Register(),ourIdentity.owningKey)
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
                 .addOutputState(outputState, User_Contract_ID)
@@ -67,10 +65,12 @@ class UpdateFlow ( val Name: String,
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.VaultQueryCriteria()
         val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.first()
+        val input = Vault.state.data
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         // belong to the transaction
-        val outputState = UserState(ourIdentity,Name,Age,Address,BirthDate,Status,Religion)
+        val outputState = UserState(ourIdentity,Name,Age,Address,BirthDate,Status,Religion,
+                listOf(ourIdentity),input.isVerified)
         // valid or invalid in contract
         val cmd = Command(UserContract.Commands.Update(),ourIdentity.owningKey)
         //add transaction Builder
@@ -82,9 +82,7 @@ class UpdateFlow ( val Name: String,
         txBuilder.verify(serviceHub)
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
-        //verify signature
-        //signedTx.verify(serviceHub)
-        //finalizing signature
+        //Notarize then Record the transaction
         subFlow(FinalityFlow(signedTx))
     }
 
@@ -101,13 +99,13 @@ class VerifyFlow () : FlowLogic<Unit>(){
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.VaultQueryCriteria()
         val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.single()
-        val inputVault = Vault.state.data
+        val input = Vault.state.data
 
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         // belong to the transaction
-        val outputState = UserState(ourIdentity,inputVault.Name,inputVault.Age,
-                inputVault.Address,inputVault.BirthDate,inputVault.Status,inputVault.Religion,true)
+        val outputState = UserState(ourIdentity,input.Name,input.Age,
+                input.Address,input.BirthDate,input.Status,input.Religion, listOf(ourIdentity),true)
         // valid or invalid in contract
         val cmd = Command(UserContract.Commands.Verify(),ourIdentity.owningKey)
         //add transaction Builder
@@ -119,9 +117,7 @@ class VerifyFlow () : FlowLogic<Unit>(){
         txBuilder.verify(serviceHub)
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
-        //verify signature
-        //signedTx.verify(serviceHub)
-        //finalizing signature
+        //Notarize then Record the transaction
         subFlow(FinalityFlow(signedTx))
     }
 

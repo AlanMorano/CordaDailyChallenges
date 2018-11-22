@@ -30,6 +30,7 @@ class GetContract : Contract {
         requireThat {
             when(command.value){
                 is Commands.Request ->{
+                    "Transaction must have one output" using (tx.outputs.size == 1)
 
                 }
             }
@@ -42,8 +43,8 @@ class GetContract : Contract {
 // * State *
 // *********
 
-data class GetState (val pANode: Party,
-                     val pBNode: Party,
-                     val Name : String) : ContractState {
-    override val participants = listOf(pANode,pBNode)
+data class GetState (val owningNode: Party,
+                     val requestingNode: Party,
+                     val isForward: Boolean = true) : ContractState {
+    override val participants = listOf(owningNode,requestingNode)
 }
