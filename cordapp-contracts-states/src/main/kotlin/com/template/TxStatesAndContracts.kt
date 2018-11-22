@@ -46,5 +46,6 @@ class GetContract : Contract {
 data class GetState (val owningNode: Party,
                      val requestingNode: Party,
                      val isForward: Boolean = true) : ContractState {
+    //participants are owningNode and requestingNode in this State
     override val participants = listOf(owningNode,requestingNode)
 }

@@ -27,23 +27,31 @@ class RegisterFlow ( val Name: String,
 
     @Suspendable
     override fun call() {
+
         // Initiator flow logic goes here.
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
+
         // belong to the transaction
         val outputState = UserState(ourIdentity,Name, Age, Address, BirthDate,Status, Religion, listOf(ourIdentity))
+
         // valid or invalid in contract
         val cmd = Command(UserContract.Commands.Register(),ourIdentity.owningKey)
+
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
                 .addOutputState(outputState, User_Contract_ID)
                 .addCommand(cmd)
+
         //verification of transaction
         txBuilder.verify(serviceHub)
+
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
+
         //verify signature
         signedTx.verify(serviceHub)
+
         //finalizing signature
         subFlow(FinalityFlow(signedTx))
     }
@@ -62,26 +70,35 @@ class UpdateFlow ( val Name: String,
 
     @Suspendable
     override fun call() {
+
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.VaultQueryCriteria()
+        //get the information from UserState
         val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.first()
         val input = Vault.state.data
+
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
+
         // belong to the transaction
         val outputState = UserState(ourIdentity,Name,Age,Address,BirthDate,Status,Religion,
                 listOf(ourIdentity),input.isVerified)
+
         // valid or invalid in contract
         val cmd = Command(UserContract.Commands.Update(),ourIdentity.owningKey)
+
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
                 .addInputState(Vault)
                 .addOutputState(outputState, User_Contract_ID)
                 .addCommand(cmd)
+
         //verification of transaction
         txBuilder.verify(serviceHub)
+
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
+
         //Notarize then Record the transaction
         subFlow(FinalityFlow(signedTx))
     }
@@ -96,25 +113,33 @@ class VerifyFlow () : FlowLogic<Unit>(){
 
     @Suspendable
     override fun call() {
+
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.VaultQueryCriteria()
+
+        //get the information from UserState
         val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.single()
         val input = Vault.state.data
 
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
+
         // belong to the transaction
         val outputState = UserState(ourIdentity,input.Name,input.Age,
                 input.Address,input.BirthDate,input.Status,input.Religion, listOf(ourIdentity),true)
+
         // valid or invalid in contract
         val cmd = Command(UserContract.Commands.Verify(),ourIdentity.owningKey)
+
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
                 .addInputState(Vault)
                 .addOutputState(outputState, User_Contract_ID)
                 .addCommand(cmd)
+
         //verification of transaction
         txBuilder.verify(serviceHub)
+
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
         //Notarize then Record the transaction
