@@ -5,6 +5,7 @@ import com.template.KYCContract.Companion.KYC_CONTRACT_ID
 import com.template.RequestContract.Companion.REQUEST_CONTRACT_ID
 import com.template.UserContract.Companion.USER_CONTRACT_ID
 import net.corda.core.contracts.Command
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.node.services.queryBy
@@ -57,7 +58,10 @@ class RegisterFlow(val name: String,
                 birthDate,
                 status,
                 religion,
-                listOf(ourIdentity))
+                false,
+                listOf(ourIdentity),
+                UniqueIdentifier()
+                )
         val cmd = Command(UserContract.Commands.Register(), ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
@@ -86,7 +90,8 @@ class UpdateFlow(val name: String,
                  val address: String,
                  val birthDate: String,
                  val status: String,
-                 val religion: String) : FlowLogic<Unit>() {
+                 val religion: String,
+                 val linearId: UniqueIdentifier) : FlowLogic<Unit>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -112,7 +117,7 @@ class UpdateFlow(val name: String,
 
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
-        val inputCriteria = QueryCriteria.VaultQueryCriteria()
+        val inputCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
         val inputStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputCriteria).states.first()
         val input = inputStateAndRef.state.data
 
@@ -125,8 +130,10 @@ class UpdateFlow(val name: String,
                 birthDate,
                 status,
                 religion,
+                input.isVerified,
                 listOf(ourIdentity),
-                input.isVerified)
+                input.linearId
+                )
         val cmd = Command(UserContract.Commands.Update(), ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
@@ -152,7 +159,7 @@ class UpdateFlow(val name: String,
 
 @InitiatingFlow
 @StartableByRPC
-class VerifyFlow() : FlowLogic<Unit>() {
+class VerifyFlow(val linearId:  UniqueIdentifier) : FlowLogic<Unit>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -178,7 +185,7 @@ class VerifyFlow() : FlowLogic<Unit>() {
 
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
-        val inputCriteria = QueryCriteria.VaultQueryCriteria()
+        val inputCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
         val inputStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputCriteria).states.first()
         val input = inputStateAndRef.state.data
 
@@ -191,8 +198,10 @@ class VerifyFlow() : FlowLogic<Unit>() {
                 input.birthDate,
                 input.status,
                 input.religion,
+                true,
                 listOf(ourIdentity),
-                true)
+                input.linearId
+                )
         val cmd = Command(UserContract.Commands.Verify(), ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
@@ -244,21 +253,17 @@ class DisseminateFlow() : FlowLogic<Unit>() {
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
         val inputRequestCriteria = QueryCriteria.VaultQueryCriteria()
-        val inputRequestStateAndRef = serviceHub.vaultService.queryBy<RequestState>(inputRequestCriteria).states.first()
-        val request = inputRequestStateAndRef.state.data
+        val inputRequestStateAndRef = serviceHub.vaultService.queryBy<RequestState>(inputRequestCriteria).states
 
         val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
         val inputUserStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states.first()
         val user = inputUserStateAndRef.state.data
 
-        val parties = mutableListOf<Party>()
+        val participants = mutableListOf<Party>()
 
-        for(x in user.parties) {
-            println(x)
-            parties.add(x)
+        for(data in user.participants) {
+            participants.add(data)
         }
-
-        parties.add(request.requestingNode)
 
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         val outputState = UserState(
@@ -269,16 +274,21 @@ class DisseminateFlow() : FlowLogic<Unit>() {
                 user.birthDate,
                 user.status,
                 user.religion,
-                parties,
-                true
+                user.isVerified,
+                participants,
+                user.linearId
         )
         val cmd = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
-                .addInputState(inputRequestStateAndRef)
                 .addInputState(inputUserStateAndRef)
                 .addOutputState(outputState, REQUEST_CONTRACT_ID)
                 .addCommand(cmd)
+
+        for(state in inputRequestStateAndRef) {
+            participants.add(state.state.data.requestingNode)
+            txBuilder.addInputState(state)
+        }
 
         /* Step 2 - Verify the transaction */
         progressTracker.currentStep = VERIFY_TRANSACTION
@@ -418,7 +428,8 @@ class ValidateFlow() : FlowLogic<Unit>() {
 
 @InitiatingFlow
 @StartableByRPC
-class RequestFlow(val owningNode: Party) : FlowLogic<Unit>() {
+class RequestFlow(val owningNode: Party,
+                  val requestedState: UniqueIdentifier) : FlowLogic<Unit>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -447,8 +458,8 @@ class RequestFlow(val owningNode: Party) : FlowLogic<Unit>() {
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         val outputState = RequestState(
                 owningNode,
-                ourIdentity
-                )
+                ourIdentity,
+                requestedState)
         val cmd = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)

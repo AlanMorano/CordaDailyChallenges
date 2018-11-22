@@ -105,10 +105,9 @@ data class UserState(val owningNode: Party,
                      val birthDate: String,
                      val status: String,
                      val religion: String,
-                     val parties: List<Party>,
-                     val isVerified: Boolean = false) : ContractState {
-    override val participants = parties
-}
+                     val isVerified: Boolean,
+                     override val participants: List<Party>,
+                     override val linearId: UniqueIdentifier) : LinearState
 
 data class KYCState(val owningNode: Party,
                     val isSent: Boolean = false,
@@ -118,6 +117,6 @@ data class KYCState(val owningNode: Party,
 
 data class RequestState(val owningNode: Party,
                         val requestingNode: Party,
-                        val isSent: Boolean = false) : ContractState {
+                        val requestedState: UniqueIdentifier) : ContractState {
     override val participants = listOf(owningNode, requestingNode)
 }
