@@ -4,11 +4,11 @@ import co.paralleluniverse.fibers.Suspendable
 import com.template.UserContract.Companion.User_Contract_ID
 import net.corda.core.contracts.Command
 import net.corda.core.flows.*
-import net.corda.core.identity.Party
 import net.corda.core.node.services.queryBy
 import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
+import java.lang.IllegalArgumentException
 
 // *********
 // * Flows *
@@ -76,6 +76,11 @@ class UpdateFlow ( val Name: String,
         //get the information from UserState
         val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.first()
         val input = Vault.state.data
+        val name = Vault.state.data.Name
+
+        if (Name != name){
+            throw IllegalArgumentException("Invalid Name")
+        }
 
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
@@ -92,6 +97,8 @@ class UpdateFlow ( val Name: String,
                 .addInputState(Vault)
                 .addOutputState(outputState, User_Contract_ID)
                 .addCommand(cmd)
+
+
 
         //verification of transaction
         txBuilder.verify(serviceHub)

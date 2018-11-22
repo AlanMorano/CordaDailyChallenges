@@ -71,6 +71,7 @@ class ShareFlow() : FlowLogic<Unit>(){
         //to add the current information of all parties
         val parties = mutableListOf<Party>()
         for(x in user.parties) {
+            if (x.equals(x))
             println((x))
             parties.add(x)
         }
