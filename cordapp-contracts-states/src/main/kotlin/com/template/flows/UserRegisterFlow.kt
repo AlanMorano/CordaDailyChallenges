@@ -28,7 +28,7 @@ class RegisterFlow(
     override fun call(){
         /* Step 1 - Build the transaction */
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
-        val userState =UserState(ownParty,name,age,address,birthDate,status,religion,isVerified)
+        val userState =UserState(ownParty,name,age,address,birthDate,status,religion, listOf(ourIdentity))
         val cmd = Command(UserContract.Commands.Register(),ownParty.owningKey)
 
 

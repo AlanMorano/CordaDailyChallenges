@@ -31,7 +31,7 @@ class UpdateFlow(val name: String,
         val inputCriteria = QueryCriteria.VaultQueryCriteria()
         val inputStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputCriteria).states.first()
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
-        val userState = UserState(ourIdentity,name,age,address,birthDate,status,religion)
+        val userState = UserState(ourIdentity,name,age,address,birthDate,status,religion, listOf(ourIdentity))
         val cmd = Command(UserContract.Commands.Update(),ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)

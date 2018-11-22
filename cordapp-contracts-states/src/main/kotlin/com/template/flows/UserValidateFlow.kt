@@ -31,7 +31,7 @@ class ValidateFlow : FlowLogic<Unit>(){
 
         val verification = true
 
-        val userState = UserState(ourIdentity,inputStateData.name,inputStateData.age,inputStateData.address,inputStateData.birthDate,inputStateData.status,inputStateData.religion,verification)
+        val userState = UserState(ourIdentity,inputStateData.name,inputStateData.age,inputStateData.address,inputStateData.birthDate,inputStateData.status,inputStateData.religion, listOf(ourIdentity))
 
         val cmd = Command(UserContract.Commands.Validate(),ourIdentity.owningKey)
 

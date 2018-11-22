@@ -13,6 +13,7 @@ data class UserState(
                      val birthDate: String,
                      val status: String,
                      val religion: String,
-                     val isVerified: Boolean = false
+                    val parties : List<Party>,
+                    val isVerified: Boolean = false
 ): ContractState {
-    override val participants = listOf(ownParty)}
+    override val participants = parties}
