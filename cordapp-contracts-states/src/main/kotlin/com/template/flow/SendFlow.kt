@@ -60,7 +60,16 @@ object SendFlow {
             val status = inputtedUserStateData.status
             val religion = inputtedUserStateData.religion
             val isVerified = inputtedUserStateData.isVerified
-            val listOfParties = listOf(requestor,ourIdentity)
+
+            var partiz = mutableListOf<Party>()
+
+
+            for(singleParticipant in inputtedUserStateData.participants){
+                partiz.add(singleParticipant)
+            }
+            partiz.add(requestor)
+
+            val listOfParties = partiz
 
 
 
@@ -69,7 +78,7 @@ object SendFlow {
 
 
 
-            val outputRequestState = RequestState(requestor, this.ourIdentity,name,true, listOf(requestor, ourIdentity))
+            val outputRequestState = RequestState(this.ourIdentity, requestor,name,true, listOf(requestor, ourIdentity))
 
             val requestStates = serviceHub.vaultService.queryBy<RequestState>().states
 
@@ -81,6 +90,7 @@ object SendFlow {
             val txCommand2 = Command(RequestContract.Commands.AcceptRequest(), ourIdentity.owningKey)
 
             val txBuilder = TransactionBuilder(notary)
+                    .addInputState(inputtedUserStateAndRef)
                     .addInputState(inputtedRequestAndSendState)
                     .addOutputState(userState, User_ID)
                     .addOutputState(outputRequestState, Request_ID)
