@@ -7,8 +7,9 @@ import net.corda.core.identity.Party
 data class RequestState(val infoOwner : Party,
                         val requestor : Party,
                         val name : String,
-//                   val listOfParties : List<Party>,
+                        val accepted: Boolean,
+                    val listOfParties : List<Party>,
                         override val linearId: UniqueIdentifier = UniqueIdentifier()): LinearState {
-    override val participants = listOf(infoOwner,requestor)
+    override val participants = listOfParties
 
 }

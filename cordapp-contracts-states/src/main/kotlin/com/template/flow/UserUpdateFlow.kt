@@ -8,14 +8,17 @@ import net.corda.core.contracts.Command
 import net.corda.core.flows.*
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
+import net.corda.core.node.services.queryBy
+import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
-object UserRegisterFlow {
+object UserUpdateFlow {
     @InitiatingFlow
     @StartableByRPC
-    class Initiator(private val name : String,
+    class Initiator(private val reqName : String,
+                    private val name : String,
                     private val age : Int,
                     private val address : String,
                     private val birthday :  String,
@@ -30,14 +33,21 @@ object UserRegisterFlow {
             progressTracker.currentStep = GETTING_NOTARY
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
-            val verification = false
+
 
             progressTracker.currentStep = GENERATING_TRANSACTION
-            val userState = UserState(this.ourIdentity,name,age,address,birthday,status,religion,verification, listOf(ourIdentity)) //, listOf(ourIdentity)
+            val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
+            val userStates = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states
 
-            val txCommand = Command(UserContract.Commands.Register(), userState.participants.map { it.owningKey })
+            val inputtedUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == reqName }
+           ?: throw java.lang.IllegalArgumentException("No User state that matches with name")
+
+
+            val outputUserState = UserState(ourIdentity,name,age,address,birthday,status,religion,inputtedUserStateAndRef.state.data.isVerified, listOf(ourIdentity))
+            val txCommand = Command(UserContract.Commands.Update(), ourIdentity.owningKey)
             val txBuilder = TransactionBuilder(notary)
-                    .addOutputState(userState, User_ID)
+                    .addInputState(inputtedUserStateAndRef)
+                    .addOutputState(outputUserState, UserContract.User_ID)
                     .addCommand(txCommand)
 
 

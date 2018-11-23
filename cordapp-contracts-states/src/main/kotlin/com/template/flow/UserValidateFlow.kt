@@ -38,7 +38,7 @@ object UserValidateFlow {
             val inputStateData = inputState.state.data
 
             val verification = true
-            val outputState = UserState(inputStateData.node,inputStateData.name,inputStateData.age,inputStateData.address,inputStateData.birthDate,inputStateData.status,inputStateData.religion,verification)
+            val outputState = UserState(inputStateData.node,inputStateData.name,inputStateData.age,inputStateData.address,inputStateData.birthDate,inputStateData.status,inputStateData.religion,verification, listOf(ourIdentity))//, listOf(ourIdentity)
 
             val txCommand =
                     Command(UserContract.Commands.Validate(),ourIdentity.owningKey)

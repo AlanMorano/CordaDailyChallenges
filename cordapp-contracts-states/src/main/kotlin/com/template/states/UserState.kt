@@ -4,6 +4,7 @@ import net.corda.core.contracts.LinearState
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
+import net.corda.core.serialization.CordaSerializable
 
 
 data class UserState(val node : Party,
@@ -14,11 +15,12 @@ data class UserState(val node : Party,
                      val status : String,
                      val religion : String,
                      val isVerified : Boolean,
-//                   val listOfParties : List<Party>,
+                     val listOfParties : List<Party>,
                      override val linearId: UniqueIdentifier = UniqueIdentifier()): LinearState{
-
-    override val participants = listOf(node)
+    override val participants = listOfParties
+            //listOfParties
 
     }
+
 
 

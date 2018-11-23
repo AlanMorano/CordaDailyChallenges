@@ -68,7 +68,7 @@ class UserStateTest {
 
     @Test
     fun `NodeIsParticipant`(){
-        val uState = UserState(testA.party,"Lance",20,"PH","July 1, 1998","Single","Catholic",true)
+        val uState = UserState(testA.party,"Lance",20,"PH","July 1, 1998","Single","Catholic",true, listOf(testA.party,testB.party))
         assertNotEquals(uState.participants.indexOf(testA.party),-1)
     }
 

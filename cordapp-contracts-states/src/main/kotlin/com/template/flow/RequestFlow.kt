@@ -9,7 +9,6 @@ import net.corda.core.flows.FinalityFlow
 import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
-import net.corda.core.identity.Party
 
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
@@ -19,7 +18,7 @@ object RequestFlow {
 
     @InitiatingFlow
     @StartableByRPC
-    class Initiator (private val infoOwner: Party,
+    class Initiator (private val infoOwner: String,
                      private val name: String): FlowLogic<SignedTransaction>(){
 
         override val progressTracker = ProgressTracker(GETTING_NOTARY, GENERATING_TRANSACTION,
@@ -31,9 +30,14 @@ object RequestFlow {
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
 
+            val infoOwnerRef = serviceHub.identityService.partiesFromName(infoOwner, false).singleOrNull()
+                    ?: throw IllegalArgumentException("No match found for infoOwner $infoOwner.")
+
+
+
             progressTracker.currentStep = GENERATING_TRANSACTION
 
-            val requestState = RequestState(infoOwner, this.ourIdentity, name)
+            val requestState = RequestState(infoOwnerRef, this.ourIdentity,name,false, listOf(infoOwnerRef,ourIdentity))
 
 
            val txCommand = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
@@ -52,8 +56,6 @@ object RequestFlow {
 
             progressTracker.currentStep = FINALISING_TRANSACTION
             return subFlow(FinalityFlow(partySignedTx))
-
-
 
         }
 
