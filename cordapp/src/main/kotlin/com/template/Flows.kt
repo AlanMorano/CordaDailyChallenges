@@ -10,6 +10,7 @@ import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.node.services.queryBy
 import net.corda.core.node.services.vault.QueryCriteria
+import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
@@ -18,12 +19,12 @@ import net.corda.core.utilities.ProgressTracker
 // **************
 @InitiatingFlow
 @StartableByRPC
-class RegisterFlow(val name: String,
-                   val age: Int,
-                   val address: String,
-                   val birthDate: String,
-                   val status: String,
-                   val religion: String) : FlowLogic<Unit>() {
+class RegisterFlow(private val name: String,
+                   private val age: Int,
+                   private val address: String,
+                   private val birthDate: String,
+                   private val status: String,
+                   private val religion: String) : FlowLogic<SignedTransaction>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -45,7 +46,7 @@ class RegisterFlow(val name: String,
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call(): SignedTransaction {
 
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
@@ -79,19 +80,19 @@ class RegisterFlow(val name: String,
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }
 
 @InitiatingFlow
 @StartableByRPC
-class UpdateFlow(val name: String,
-                 val age: Int,
-                 val address: String,
-                 val birthDate: String,
-                 val status: String,
-                 val religion: String,
-                 val linearId: UniqueIdentifier) : FlowLogic<Unit>() {
+class UpdateFlow(private val name: String,
+                 private val age: Int,
+                 private val address: String,
+                 private val birthDate: String,
+                 private val status: String,
+                 private val religion: String,
+                 private val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -113,7 +114,7 @@ class UpdateFlow(val name: String,
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call(): SignedTransaction {
 
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
@@ -153,13 +154,13 @@ class UpdateFlow(val name: String,
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }
 
 @InitiatingFlow
 @StartableByRPC
-class VerifyFlow(val linearId:  UniqueIdentifier) : FlowLogic<Unit>() {
+class VerifyFlow(private val linearId:  UniqueIdentifier) : FlowLogic<SignedTransaction>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -181,7 +182,7 @@ class VerifyFlow(val linearId:  UniqueIdentifier) : FlowLogic<Unit>() {
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call(): SignedTransaction {
 
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
@@ -220,13 +221,13 @@ class VerifyFlow(val linearId:  UniqueIdentifier) : FlowLogic<Unit>() {
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }
 
 @InitiatingFlow
 @StartableByRPC
-class DisseminateFlow() : FlowLogic<Unit>() {
+class DisseminateFlow(private val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -248,15 +249,15 @@ class DisseminateFlow() : FlowLogic<Unit>() {
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call(): SignedTransaction {
 
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
         val inputRequestCriteria = QueryCriteria.VaultQueryCriteria()
         val inputRequestStateAndRef = serviceHub.vaultService.queryBy<RequestState>(inputRequestCriteria).states
 
-        val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
-        val inputUserStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states.first()
+        val inputUserCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
+        val inputUserStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states.single()
         val user = inputUserStateAndRef.state.data
 
         val participants = mutableListOf<Party>()
@@ -278,16 +279,18 @@ class DisseminateFlow() : FlowLogic<Unit>() {
                 participants,
                 user.linearId
         )
-        val cmd = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
+        val cmd = Command(UserContract.Commands.Disseminate(), ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
                 .addInputState(inputUserStateAndRef)
-                .addOutputState(outputState, REQUEST_CONTRACT_ID)
+                .addOutputState(outputState, USER_CONTRACT_ID)
                 .addCommand(cmd)
 
         for(state in inputRequestStateAndRef) {
-            participants.add(state.state.data.requestingNode)
-            txBuilder.addInputState(state)
+            if (state.state.data.requestedState == linearId) {
+                participants.add(state.state.data.requestingNode)
+                txBuilder.addInputState(state)
+            }
         }
 
         /* Step 2 - Verify the transaction */
@@ -298,21 +301,17 @@ class DisseminateFlow() : FlowLogic<Unit>() {
         progressTracker.currentStep = SIGN_TRANSACTION
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
-
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }
 
-// *************
-// * KYC Flows *
-// *************
-
 @InitiatingFlow
 @StartableByRPC
-class SendIDFlow() : FlowLogic<Unit>() {
+class RemoveFlow(private val node: Party,
+                 private val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -334,7 +333,86 @@ class SendIDFlow() : FlowLogic<Unit>() {
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call(): SignedTransaction {
+
+        /* Step 1 - Build the transaction */
+        progressTracker.currentStep = BUILDING_TRANSACTION
+        val inputUserCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
+        val inputUserStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states.single()
+        val user = inputUserStateAndRef.state.data
+
+        val participants = mutableListOf<Party>()
+
+        for(data in user.participants) {
+            participants.add(data)
+        }
+
+        participants.remove(node)
+
+        val notary = serviceHub.networkMapCache.notaryIdentities.first()
+        val outputState = UserState(
+                ourIdentity,
+                user.name,
+                user.age,
+                user.address,
+                user.birthDate,
+                user.status,
+                user.religion,
+                user.isVerified,
+                participants,
+                user.linearId
+        )
+        val cmd = Command(UserContract.Commands.Remove(), ourIdentity.owningKey)
+
+        val txBuilder = TransactionBuilder(notary)
+                .addInputState(inputUserStateAndRef)
+                .addOutputState(outputState, USER_CONTRACT_ID)
+                .addCommand(cmd)
+
+        /* Step 2 - Verify the transaction */
+        progressTracker.currentStep = VERIFY_TRANSACTION
+        txBuilder.verify(serviceHub)
+
+        /* Step 3 - Sign the transaction */
+        progressTracker.currentStep = SIGN_TRANSACTION
+        val signedTx = serviceHub.signInitialTransaction(txBuilder)
+
+        /* Step 4 and 5 - Notarize then Record the transaction */
+        progressTracker.currentStep = NOTARIZE_TRANSACTION
+        progressTracker.currentStep = RECORD_TRANSACTION
+        return subFlow(FinalityFlow(signedTx))
+    }
+}
+
+// *************
+// * KYC Flows *
+// *************
+
+@InitiatingFlow
+@StartableByRPC
+class SendIDFlow() : FlowLogic<SignedTransaction>() {
+
+    /* Declare Transaction Steps */
+    companion object {
+        object BUILDING_TRANSACTION : ProgressTracker.Step("Building Transaction")
+        object SIGN_TRANSACTION : ProgressTracker.Step("Signing Transaction")
+        object VERIFY_TRANSACTION : ProgressTracker.Step("Verifying Transaction")
+        object NOTARIZE_TRANSACTION : ProgressTracker.Step("Notarizing Transaction")
+        object RECORD_TRANSACTION : ProgressTracker.Step("Recording Transaction")
+    }
+
+    fun tracker() = ProgressTracker(
+            BUILDING_TRANSACTION,
+            SIGN_TRANSACTION,
+            VERIFY_TRANSACTION,
+            NOTARIZE_TRANSACTION,
+            RECORD_TRANSACTION
+    )
+
+    override val progressTracker = tracker()
+
+    @Suspendable
+    override fun call(): SignedTransaction {
 
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
@@ -359,13 +437,13 @@ class SendIDFlow() : FlowLogic<Unit>() {
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }
 
 @InitiatingFlow
 @StartableByRPC
-class ValidateFlow() : FlowLogic<Unit>() {
+class ValidateFlow() : FlowLogic<SignedTransaction>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -387,7 +465,7 @@ class ValidateFlow() : FlowLogic<Unit>() {
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call(): SignedTransaction {
 
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
@@ -418,7 +496,7 @@ class ValidateFlow() : FlowLogic<Unit>() {
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }
 
@@ -428,8 +506,8 @@ class ValidateFlow() : FlowLogic<Unit>() {
 
 @InitiatingFlow
 @StartableByRPC
-class RequestFlow(val owningNode: Party,
-                  val requestedState: UniqueIdentifier) : FlowLogic<Unit>() {
+class RequestFlow(private val owningNode: Party,
+                  private val requestedState: UniqueIdentifier) : FlowLogic<SignedTransaction>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -451,7 +529,7 @@ class RequestFlow(val owningNode: Party,
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call(): SignedTransaction {
 
         /* Step 1 - Build the transaction */
         progressTracker.currentStep = BUILDING_TRANSACTION
@@ -474,10 +552,9 @@ class RequestFlow(val owningNode: Party,
         progressTracker.currentStep = SIGN_TRANSACTION
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
-
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }

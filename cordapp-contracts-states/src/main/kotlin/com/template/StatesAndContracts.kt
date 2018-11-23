@@ -18,6 +18,7 @@ class UserContract : Contract {
         class Update : Commands
         class Verify : Commands
         class Disseminate : Commands
+        class Remove : Commands
     }
 
     override fun verify(tx: LedgerTransaction) {
@@ -27,19 +28,23 @@ class UserContract : Contract {
             when(command.value) {
                 is Commands.Register -> {
                     /* Shape Constraints */
-                    "Transaction must have no input" using (tx.inputs.isEmpty())
-                    "Transaction must have one output" using (tx.outputs.size == 1)
+                    "Transaction must have no input." using (tx.inputs.isEmpty())
+                    "Transaction must have one output." using (tx.outputs.size == 1)
+
+                    /* Register Specific Constraints */
+                    val output = tx.outputsOfType<UserState>().first()
+                    "User must not be registered as verified." using (!output.isVerified)
                 }
                 is Commands.Update -> {
                     /* Shape Constraints */
-                    "Transaction must have one input" using (tx.inputs.size == 1)
-                    "Transaction must have one output" using (tx.outputs.size == 1)
+                    "Transaction must have one input." using (tx.inputs.size == 1)
+                    "Transaction must have one output." using (tx.outputs.size == 1)
                 }
 
                 is Commands.Verify -> {
                     /* Shape Constraints */
-                    "Transaction must have one input" using (tx.inputs.size == 1)
-                    "Transaction must have one output" using (tx.outputs.size == 1)
+                    "Transaction must have one input." using (tx.inputs.size == 1)
+                    "Transaction must have one output." using (tx.outputs.size == 1)
                 }
             }
         }
@@ -63,13 +68,13 @@ class KYCContract : Contract {
             when(command.value) {
                 is Commands.Send -> {
                     /* Shape Constraints */
-                    "Transaction must have no input" using (tx.inputs.isEmpty())
-                    "Transaction must have one output" using (tx.outputs.size == 1)
+                    "Transaction must have no input." using (tx.inputs.isEmpty())
+                    "Transaction must have one output." using (tx.outputs.size == 1)
                 }
                 is Commands.Validate -> {
                     /* Shape Constraints */
-                    "Transaction must have one input" using (tx.inputs.size == 1)
-                    "Transaction must have one output" using (tx.outputs.size == 1)
+                    "Transaction must have one input." using (tx.inputs.size == 1)
+                    "Transaction must have one output." using (tx.outputs.size == 1)
 
                     /* Send Specific Constraints */
                     "User must have already sent an ID." using tx.inRef<KYCState>(0).state.data.isSent

@@ -1,5 +1,6 @@
 package com.template
 
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.testing.core.singleIdentity
 import net.corda.testing.node.MockNetwork
 import org.junit.After
@@ -21,7 +22,7 @@ class FlowTests {
 
     @Test
     fun `Request Test`() {
-        val signedTransactionFuture = a.startFlow(RequestFlow(b.info.singleIdentity()))
+        val signedTransactionFuture = a.startFlow(RequestFlow(b.info.singleIdentity(), UniqueIdentifier()))
         network.runNetwork()
         assertTrue(signedTransactionFuture.isDone)
     }
