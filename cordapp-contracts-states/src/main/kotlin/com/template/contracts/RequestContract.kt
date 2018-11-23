@@ -13,6 +13,7 @@ class RequestContract: Contract{
 
     interface Commands : CommandData {
         class Request : Commands
+        class Disseminate: Commands
     }
 
     override fun verify(tx: LedgerTransaction){

@@ -16,7 +16,7 @@ import net.corda.core.utilities.ProgressTracker
 
 @InitiatingFlow
 @StartableByRPC
-class ValidateFlow : FlowLogic<Unit>(){
+class VerifyFlow : FlowLogic<Unit>(){
 
     override val progressTracker = ProgressTracker()
     @Suspendable
@@ -34,7 +34,7 @@ class ValidateFlow : FlowLogic<Unit>(){
 
         val userState = UserState(ourIdentity,inputStateData.name,inputStateData.age,inputStateData.address,inputStateData.birthDate,inputStateData.status,inputStateData.religion,true, listOf(ourIdentity),inputStateData.linearId)
 
-        val cmd = Command(UserContract.Commands.Validate(),ourIdentity.owningKey)
+        val cmd = Command(UserContract.Commands.Verify(),ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
                 .addInputState(inputState)

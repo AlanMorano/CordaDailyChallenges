@@ -15,14 +15,14 @@ import net.corda.core.utilities.ProgressTracker
 @InitiatingFlow
 @StartableByRPC
 class RegisterFlow(
-                  val ownParty: Party,
-                  val name: String,
-                  val age: Int,
-                  val address: String,
-                  val birthDate: String,
-                  val status: String,
-                  val religion: String,
-                  val isVerified: Boolean): FlowLogic<Unit>(){
+        private val ownParty: Party,
+        private val name: String,
+        private val age: Int,
+        private val address: String,
+        private val birthDate: String,
+        private val status: String,
+        private val religion: String,
+        private val isVerified: Boolean): FlowLogic<Unit>(){
     override val progressTracker = ProgressTracker()
 
     @Suspendable

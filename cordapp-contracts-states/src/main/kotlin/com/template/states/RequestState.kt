@@ -6,6 +6,6 @@ import net.corda.core.identity.Party
 
 data class RequestState( val OtherParty : Party,
                          val requestParty : Party,
-                         val requestedState: UniqueIdentifier): ContractState{
+                         val Id: UniqueIdentifier): ContractState{
     override val participants = listOf(OtherParty,requestParty)
 }

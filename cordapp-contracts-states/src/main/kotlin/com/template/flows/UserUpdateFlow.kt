@@ -9,6 +9,7 @@ import net.corda.core.flows.FinalityFlow
 import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
+import net.corda.core.internal.isUploaderTrusted
 import net.corda.core.node.services.queryBy
 import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.transactions.TransactionBuilder
@@ -18,13 +19,13 @@ import java.lang.IllegalArgumentException
 
 @InitiatingFlow
 @StartableByRPC
-class UpdateFlow(val name: String,
-
-                 val age: Int,
-                 val address: String,
-                 val birthDate: String,
-                 val status: String,
-                 val religion: String): FlowLogic<Unit>(){
+class UpdateFlow( private val linearId: UniqueIdentifier,
+                  private val name: String,
+                  private val age: Int,
+                  private val address: String,
+                  private val birthDate: String,
+                  private val status: String,
+                  private val religion: String): FlowLogic<Unit>(){
     override val progressTracker = ProgressTracker()
 
     @Suspendable
@@ -35,11 +36,11 @@ class UpdateFlow(val name: String,
         val inputStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputCriteria).states.first()
 
         val input = inputStateAndRef.state.data
-//        val Name = inputStateAndRef.state.data.name
+        val id = inputStateAndRef.state.data.linearId
+        if(linearId != id){
 
-//        if(name != Name){
-//            throw IllegalArgumentException("Invalid Name")
-//        }
+            throw IllegalArgumentException("Invalid LinearId")
+        }
 
 
 

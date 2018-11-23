@@ -14,7 +14,8 @@ class UserContract : Contract {
     interface Commands : CommandData{
         class Register : Commands
         class Update : Commands
-        class Validate : Commands
+        class Verify : Commands
+        class Disseminate: Commands
     }
 
     override fun verify(tx: LedgerTransaction){
@@ -30,7 +31,7 @@ class UserContract : Contract {
                     "Transaction must have one input" using (tx.inputs.size == 1)
                     "Transaction must have one output" using (tx.outputs.size == 1)
                 }
-                is Commands.Validate ->{
+                is Commands.Verify ->{
                     "Transaction must have one input" using (tx.inputs.size == 1)
                     "Transaction must have one output" using (tx.outputs.size == 1)
 

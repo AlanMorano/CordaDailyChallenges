@@ -2,9 +2,11 @@ package com.template.flows
 
 import co.paralleluniverse.fibers.Suspendable
 import com.template.contracts.RequestContract
+import com.template.contracts.UserContract
 import com.template.states.RequestState
 import com.template.states.UserState
 import net.corda.core.contracts.Command
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.FinalityFlow
 import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
@@ -17,7 +19,7 @@ import net.corda.core.utilities.ProgressTracker
 
 @InitiatingFlow
 @StartableByRPC
-class DisseminateFlow() : FlowLogic<Unit>(){
+class DisseminateFlow(private  val linearId: UniqueIdentifier) : FlowLogic<Unit>(){
 
     override  val progressTracker = ProgressTracker()
 
@@ -28,19 +30,12 @@ class DisseminateFlow() : FlowLogic<Unit>(){
         val inputRequestStateAndRef = serviceHub.vaultService.queryBy<RequestState>(inputRequestCriteria).states
 //        val request = inputRequestStateAndRef.state.data
 
-        val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
-        val inputUserStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states.first()
+        val inputUserCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
+        val inputUserStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states.single()
         val user = inputUserStateAndRef.state.data
 
-//        val parties = mutableListOf<Party>()
-//        for(x in user.parties) {
-//            println(x)
-//            parties.add(x)
-//        }
-//        parties.add(request.requestParty)
-
-
         val participants = mutableListOf<Party>()
+
         for(data in user.participants){
             participants.add(data)
 
@@ -59,17 +54,20 @@ class DisseminateFlow() : FlowLogic<Unit>(){
                 participants,
                 user.linearId
         )
-        val cmd = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
+        val cmd = Command(UserContract.Commands.Disseminate(), ourIdentity.owningKey)
 
         val txBuilder = TransactionBuilder(notary)
                 .addInputState(inputUserStateAndRef)
-                .addOutputState(outputState, RequestContract.ID)
+                .addOutputState(outputState, UserContract.ID)
                 .addCommand(cmd)
         /* Step 2 - Verify the transaction */
 
-        for(state in inputRequestStateAndRef){
-            participants.add(state.state.data.requestParty)
-            txBuilder.addInputState(state)
+        for(state in inputRequestStateAndRef) {
+            if (state.state.data.Id == linearId) {
+                participants.add(state.state.data.requestParty)
+                txBuilder.addInputState(state)
+
+            }
         }
 
         txBuilder.verify(serviceHub)
