@@ -2,25 +2,25 @@ package com.template
 
 import co.paralleluniverse.fibers.Suspendable
 import com.template.GetContract.Companion.Get_Contract_ID
-import com.template.UserContract.Companion.User_Contract_ID
 import net.corda.core.contracts.Command
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.node.services.queryBy
 import net.corda.core.node.services.vault.QueryCriteria
+import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
 @InitiatingFlow
 @StartableByRPC
 class RequestFlow ( val owningParty: Party,
-                    val IdState: UniqueIdentifier) : FlowLogic<Unit>(){
+                    val IdState: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker()
 
     @Suspendable
-    override fun call() {
+    override fun call() : SignedTransaction {
 
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
@@ -43,19 +43,19 @@ class RequestFlow ( val owningParty: Party,
         val partySigned = serviceHub.signInitialTransaction(txBuilder)
 
         //Notarize then Record the transaction
-        subFlow(FinalityFlow(partySigned))
+        return subFlow(FinalityFlow(partySigned))
 
     }
 }
 
 @InitiatingFlow
 @StartableByRPC
-class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<Unit>(){
+class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker()
 
     @Suspendable
-    override fun call() {
+    override fun call() : SignedTransaction {
 
         // Initiator flow logic goes here from GetState
         val requestCriteria = QueryCriteria.VaultQueryCriteria()
@@ -115,18 +115,18 @@ class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<Unit>(){
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
         //Notarize then Record the transaction
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }
 @InitiatingFlow
 @StartableByRPC
 class RemoveFlow(   val OwnParty: Party,
-                    val linearId: UniqueIdentifier) : FlowLogic<Unit>(){
+                    val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker()
 
     @Suspendable
-    override fun call() {
+    override fun call() : SignedTransaction {
 
         // Initiator flow logic goes here from UserState
         val userCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
@@ -175,6 +175,6 @@ class RemoveFlow(   val OwnParty: Party,
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
         //Notarize then Record the transaction
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }

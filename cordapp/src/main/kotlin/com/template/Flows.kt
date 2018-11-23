@@ -7,9 +7,9 @@ import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
 import net.corda.core.node.services.queryBy
 import net.corda.core.node.services.vault.QueryCriteria
+import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
-import java.lang.IllegalArgumentException
 
 // *********
 // * Flows *
@@ -21,12 +21,12 @@ class RegisterFlow ( val Name: String,
                      val Address: String,
                      val BirthDate: String,
                      val Status: String,
-                     val Religion: String) : FlowLogic<Unit>() {
+                     val Religion: String) : FlowLogic<SignedTransaction>() {
 
     override val progressTracker = ProgressTracker()
 
     @Suspendable
-    override fun call() {
+    override fun call() : SignedTransaction{
 
         // Initiator flow logic goes here.
         // verify notary
@@ -54,7 +54,7 @@ class RegisterFlow ( val Name: String,
         signedTx.verify(serviceHub)
 
         //finalizing signature
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }
 
@@ -66,12 +66,12 @@ class UpdateFlow ( val Name: String,
                    val BirthDate: String,
                    val Status: String,
                    val Religion: String,
-                   val linearId: UniqueIdentifier) : FlowLogic<Unit>(){
+                   val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker()
 
     @Suspendable
-    override fun call() {
+    override fun call() : SignedTransaction {
 
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
@@ -107,19 +107,19 @@ class UpdateFlow ( val Name: String,
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
         //Notarize then Record the transaction
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 
 }
 
 @InitiatingFlow
 @StartableByRPC
-class VerifyFlow (val linearId: UniqueIdentifier) : FlowLogic<Unit>(){
+class VerifyFlow (val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker()
 
     @Suspendable
-    override fun call() {
+    override fun call() : SignedTransaction {
 
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
@@ -152,7 +152,7 @@ class VerifyFlow (val linearId: UniqueIdentifier) : FlowLogic<Unit>(){
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
         //Notarize then Record the transaction
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 
 }
