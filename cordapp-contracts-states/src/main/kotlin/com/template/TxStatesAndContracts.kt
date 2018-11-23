@@ -1,9 +1,6 @@
 package com.template
 
-import net.corda.core.contracts.CommandData
-import net.corda.core.contracts.Contract
-import net.corda.core.contracts.ContractState
-import net.corda.core.contracts.requireThat
+import net.corda.core.contracts.*
 import net.corda.core.identity.Party
 import net.corda.core.transactions.LedgerTransaction
 
@@ -19,6 +16,7 @@ class GetContract : Contract {
     // Used to indicate the transaction's intent.
     interface Commands : CommandData {
         class Request : Commands
+        class Share : Commands
     }
 
     // A transaction is valid if the verify() function of the contract of all the transaction's input and output states
@@ -33,6 +31,9 @@ class GetContract : Contract {
                     "Transaction must have one output" using (tx.outputs.size == 1)
 
                 }
+                is Commands.Share ->{
+
+                }
             }
         }
     }
@@ -43,9 +44,9 @@ class GetContract : Contract {
 // * State *
 // *********
 
-data class GetState (val owningNode: Party,
-                     val requestingNode: Party,
-                     val isForward: Boolean = true) : ContractState {
+data class GetState (val ownNode: Party,
+                     val requestNode: Party,
+                     val IdState: UniqueIdentifier) : ContractState {
     //participants are owningNode and requestingNode in this State
-    override val participants = listOf(owningNode,requestingNode)
+    override val participants = listOf(ownNode,requestNode)
 }

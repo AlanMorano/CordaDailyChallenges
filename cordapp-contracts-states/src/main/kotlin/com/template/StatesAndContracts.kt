@@ -57,14 +57,15 @@ class UserContract : Contract {
 // * State *
 // *********
 data class UserState ( val Node: Party,
-                    val Name: String,
-                    val Age: Int,
-                    val Address : String,
+                       val Name: String,
+                       val Age: Int,
+                       val Address : String,
                        val BirthDate: String,
                        val Status: String,
                        val Religion: String,
                        val parties: List<Party>,
-                       val isVerified : Boolean = false): ContractState{
+                       val isVerified : Boolean,
+                       override val linearId : UniqueIdentifier = UniqueIdentifier()): LinearState{
     //participants are all the list of the parties give its information
     override val participants = parties
 }

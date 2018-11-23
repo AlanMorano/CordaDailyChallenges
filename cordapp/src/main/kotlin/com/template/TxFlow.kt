@@ -3,6 +3,7 @@ package com.template
 import co.paralleluniverse.fibers.Suspendable
 import com.template.GetContract.Companion.Get_Contract_ID
 import net.corda.core.contracts.Command
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.node.services.queryBy
@@ -12,7 +13,8 @@ import net.corda.core.utilities.ProgressTracker
 
 @InitiatingFlow
 @StartableByRPC
-class RequestFlow ( val owningParty: Party) : FlowLogic<Unit>(){
+class RequestFlow ( val owningParty: Party,
+                    val IdState: UniqueIdentifier) : FlowLogic<Unit>(){
 
     override val progressTracker = ProgressTracker()
 
@@ -23,14 +25,14 @@ class RequestFlow ( val owningParty: Party) : FlowLogic<Unit>(){
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         // request to other party
-        val requester = GetState(owningParty,ourIdentity)
+        val requester = GetState(owningParty,ourIdentity,IdState)
 
         // valid or invalid in contract
         val cmd = Command (GetContract.Commands.Request(), ourIdentity.owningKey)
 
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
-                .addOutputState(requester, GetContract.Get_Contract_ID)
+                .addOutputState(requester, Get_Contract_ID)
                 .addCommand(cmd)
 
         //verification of transaction
@@ -47,7 +49,7 @@ class RequestFlow ( val owningParty: Party) : FlowLogic<Unit>(){
 
 @InitiatingFlow
 @StartableByRPC
-class ShareFlow() : FlowLogic<Unit>(){
+class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<Unit>(){
 
     override val progressTracker = ProgressTracker()
 
@@ -55,27 +57,24 @@ class ShareFlow() : FlowLogic<Unit>(){
     override fun call() {
 
         // Initiator flow logic goes here from GetState
-        val inputRequestCriteria = QueryCriteria.VaultQueryCriteria()
+        val requestCriteria = QueryCriteria.VaultQueryCriteria()
 
         //verify the request by using requestFlow (GetState)
-        val inputRequestStateAndRef = serviceHub.vaultService.queryBy<GetState>(inputRequestCriteria).states.first()
-        val request = inputRequestStateAndRef.state.data
+        val requestVault = serviceHub.vaultService.queryBy<GetState>(requestCriteria).states
 
         // Initiator flow logic goes here from UserState
-        val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
+        val userCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
 
         //get the information from UserState owning Party
-        val inputUserStateAndRef = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states.first()
-        val user = inputUserStateAndRef.state.data
+        val userVault = serviceHub.vaultService.queryBy<UserState>(userCriteria).states.first()
+        val user = userVault.state.data
 
-        //to add the current information of all parties
+        //add all the participants in parties
         val parties = mutableListOf<Party>()
-        for(x in user.parties) {
-            if (x.equals(x))
-            println((x))
-            parties.add(x)
+        for (data in user.participants){            //search all the participant in the vault
+            parties.add(data)                       //add the participants in the parties
         }
-        parties.add(request.requestingNode)
+
 
         //verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
@@ -90,7 +89,8 @@ class ShareFlow() : FlowLogic<Unit>(){
                 user.Status,
                 user.Religion,
                 parties,
-                true
+                user.isVerified,
+                user.linearId
         )
 
         // valid or invalid in contract
@@ -98,10 +98,14 @@ class ShareFlow() : FlowLogic<Unit>(){
 
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
-                .addInputState(inputRequestStateAndRef)
-                .addInputState(inputUserStateAndRef)
+                .addInputState(userVault)
                 .addOutputState(outputState,Get_Contract_ID)
                 .addCommand(cmd)
+
+        for(state in requestVault) {                    //search in the requestVault
+            parties.add(state.state.data.requestNode)   //add requestNode in the parties
+            txBuilder.addInputState(state)
+        }
 
         //verification of transaction
         txBuilder.verify(serviceHub)
@@ -113,3 +117,4 @@ class ShareFlow() : FlowLogic<Unit>(){
         subFlow(FinalityFlow(signedTx))
     }
 }
+
