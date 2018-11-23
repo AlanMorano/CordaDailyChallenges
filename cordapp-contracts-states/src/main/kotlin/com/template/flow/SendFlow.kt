@@ -50,9 +50,8 @@ object SendFlow {
 //            }
 
 
-            println(inputtedUserStateAndRef)
 
-            val inputtedUserStateData = inputtedUserStateAndRef!!.state.data
+            val inputtedUserStateData = inputtedUserStateAndRef.state.data
 
             val name = inputtedUserStateData.name
             val age = inputtedUserStateData.age
