@@ -43,7 +43,8 @@ object UserUpdateFlow {
            ?: throw java.lang.IllegalArgumentException("No User state that matches with name")
 
 
-            val outputUserState = UserState(ourIdentity,name,age,address,birthday,status,religion,inputtedUserStateAndRef.state.data.isVerified, listOf(ourIdentity))
+            val partiz = inputtedUserStateAndRef.state.data.listOfParties
+            val outputUserState = UserState(ourIdentity,name,age,address,birthday,status,religion,inputtedUserStateAndRef.state.data.isVerified, partiz)
             val txCommand = Command(UserContract.Commands.Update(), ourIdentity.owningKey)
             val txBuilder = TransactionBuilder(notary)
                     .addInputState(inputtedUserStateAndRef)

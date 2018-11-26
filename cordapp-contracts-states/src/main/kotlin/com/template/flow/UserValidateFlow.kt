@@ -10,8 +10,6 @@ import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
 import net.corda.core.node.services.queryBy
-import net.corda.core.node.services.vault.QueryCriteria
-import net.corda.core.schemas.QueryableState
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
@@ -20,7 +18,7 @@ object UserValidateFlow {
 
     @InitiatingFlow
     @StartableByRPC
-    class Initiator : FlowLogic<SignedTransaction>(){
+    class Initiator (private val name: String) : FlowLogic<SignedTransaction>(){
 
         override val progressTracker = ProgressTracker(GETTING_NOTARY, GENERATING_TRANSACTION,
                 VERIFYING_TRANSACTION, SIGNING_TRANSACTION, FINALISING_TRANSACTION)
@@ -33,18 +31,35 @@ object UserValidateFlow {
 
             progressTracker.currentStep = GENERATING_TRANSACTION
 
-            val criteria = QueryCriteria.LinearStateQueryCriteria(participants = listOf(ourIdentity))
-            val inputState = serviceHub.vaultService.queryBy<UserState>(criteria).states.single()
-            val inputStateData = inputState.state.data
+//            val criteria = QueryCriteria.VaultQueryCriteria()
+//            val inputState = serviceHub.vaultService.queryBy<UserState>(criteria).states.single()
+//            val inputStateData = inputState.state.data
 
-            val verification = true
-            val outputState = UserState(inputStateData.node,inputStateData.name,inputStateData.age,inputStateData.address,inputStateData.birthDate,inputStateData.status,inputStateData.religion,verification, listOf(ourIdentity))//, listOf(ourIdentity)
+            val userStates = serviceHub.vaultService.queryBy<UserState>().states
 
+            val inputUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == this.name }
+                    ?: throw java.lang.IllegalArgumentException("No User state that matches with name")
+
+            val inputStateData = inputUserStateAndRef.state.data
+
+            val node = inputStateData.node
+            val name = inputStateData.name
+            val age = inputStateData.age
+            val address = inputStateData.address
+            val birthday = inputStateData.birthDate
+            val status = inputStateData.status
+            val religion = inputStateData.religion
+            val isVerified = true
+            val list = listOf(ourIdentity)
+
+            val outputState = UserState(node,name,age,address,birthday,status,religion,isVerified,list)//, listOf(ourIdentity)
+
+            println(outputState)
             val txCommand =
                     Command(UserContract.Commands.Validate(),ourIdentity.owningKey)
 
             val txBuilder = TransactionBuilder(notary)
-                    .addInputState(inputState)
+                    .addInputState(inputUserStateAndRef)
                     .addOutputState(outputState, User_ID)
                     .addCommand(txCommand)
 
