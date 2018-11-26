@@ -11,5 +11,4 @@ data class RequestState(val infoOwner : Party,
                     val listOfParties : List<Party>,
                         override val linearId: UniqueIdentifier = UniqueIdentifier()): LinearState {
     override val participants = listOfParties
-
 }

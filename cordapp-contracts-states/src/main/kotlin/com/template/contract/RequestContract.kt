@@ -1,5 +1,7 @@
 package com.template.contract
 
+import com.template.states.RequestState
+import com.template.states.UserState
 import net.corda.core.contracts.*
 import net.corda.core.transactions.LedgerTransaction
 
@@ -17,21 +19,29 @@ class RequestContract : Contract {
     override fun verify(tx: LedgerTransaction) {
         val command = tx.commands.requireSingleCommand<RequestContract.Commands>()
 
-//        when(command.value){
-//
-//            is Commands.Request -> requireThat {
-//                "There are no inputs" using (tx.inputStates.isEmpty())
-//                "There is exactly one output" using (tx.outputStates.size == 1)
-//                "The output is of type RequestState" using (tx.outputsOfType<RequestState>().size == 1)
-//
-//            }
-//            is Commands.AcceptRequest -> requireThat {
-//                "There are no inputs" using (true)
-//                    "There is two output" using (tx.outputStates.size == 2)
-//                    "The output is of type RequestState" using (tx.outputsOfType<RequestState>().size == 1)
-//
-//            }
-//
-//        }
+        when(command.value){
+
+            is Commands.Request -> requireThat {
+                val outputRequest = tx.outputsOfType<RequestState>()
+
+                "There is no input" using (tx.inputStates.isEmpty())
+                "There is exactly one output" using (tx.outputStates.size == 1)
+                "The output is of type RequestState" using (outputRequest.single() is RequestState)
+                "Accepted must be defaulted into false" using (!outputRequest.single().accepted)
+                "Only two parties are involved" using (outputRequest.single().listOfParties.size == 2)
+
+
+            }
+            is Commands.AcceptRequest -> requireThat {
+                val inputAcceptReq = tx.inputsOfType<RequestState>()
+                val outputAcceptReq = tx.outRefsOfType<RequestState>()
+                "Only one input UserState must be consumed" using (inputAcceptReq.size == 1)
+                "Only one output UserState must be created" using (outputAcceptReq.size == 1)
+                "Command must be SendRequest" using (command.value is Commands.AcceptRequest)
+
+
+            }
+
+        }
     }
 }

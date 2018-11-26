@@ -40,6 +40,7 @@ object UserValidateFlow {
             val inputUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == this.name }
                     ?: throw java.lang.IllegalArgumentException("No User state that matches with name")
 
+            println(inputUserStateAndRef)
             val inputStateData = inputUserStateAndRef.state.data
 
             val node = inputStateData.node

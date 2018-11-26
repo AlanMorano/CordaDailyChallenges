@@ -76,6 +76,9 @@ object SendFlow {
             val userState = UserState(this.ourIdentity, name,age,address,birthday,
                     status,religion,isVerified, listOfParties)
 
+            println(inputtedUserStateAndRef)
+            println(userState)
+
 
 
             val outputRequestState = RequestState(this.ourIdentity, requestor,name,true, listOf(requestor, ourIdentity))

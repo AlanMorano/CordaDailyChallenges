@@ -38,26 +38,59 @@ class UserContract : Contract {
                 "Participants must only be the registering node" using (outputRegister.participants.size == 1)
             }
 
-//            is Commands.Validate -> requireThat {
-//                val inputValidate = tx.inputsOfType<UserState>()
-//                val outputValidate = tx.outputsOfType<UserState>()
-//                "Only one input should be consumed when validating" using (inputValidate.size == 1)
-//                "Only one output should be consumed when validating" using (outputValidate.size == 1)
-//                "Input must be UserState" using (tx.getInput(0) is UserState)
-//                "Output must be UserState" using (tx.getOutput(0) is UserState)
-//                "Input Verified must be false" using (!inputValidate.single().isVerified)
-//                "Output Verified must be true" using (inputValidate.single().isVerified)
-//
-//
-//
-//
-//            }
+            is Commands.Validate -> requireThat {
+                val inputValidate = tx.inputsOfType<UserState>()
+                val outputValidate = tx.outputsOfType<UserState>()
+                "Only one input should be consumed when validating" using (inputValidate.size == 1)
+                "Only one output should be consumed when validating" using (outputValidate.size == 1)
+               "Input must be UserState" using (inputValidate.single() is UserState)
+                "Output must be UserState" using (outputValidate.single() is UserState)
+                "Input Verified must be false" using (!inputValidate.single().isVerified)
+                "Output Verified must be true" using (outputValidate.single().isVerified)
+                val inputValidateState = inputValidate.single()
+                val outputValidateState = inputValidate.single()
+                "Node inputState and outputState" using (inputValidateState.node == outputValidateState.node)
+                "Name inputState and outputState" using (inputValidateState.name == outputValidateState.name)
+                "Age inputState and outputState" using (inputValidateState.age == outputValidateState.age)
+                "Address inputState and outputState" using (inputValidateState.address == outputValidateState.address)
+                "Birthday inputState and outputState" using (inputValidateState.birthDate == outputValidateState.birthDate)
+                "Status inputState and outputState" using (inputValidateState.status == outputValidateState.status)
+                "Religion inputState and outputState" using (inputValidateState.religion == outputValidateState.religion)
+                "List inputState and outputState" using (inputValidateState.listOfParties == outputValidateState.listOfParties)
+
+            }
 
             is Commands.Update -> requireThat {
+                val inputUpdate = tx.inputsOfType<UserState>()
+                val outputUpdate = tx.outputsOfType<UserState>()
+                "Only one input should be consumed when validating" using (inputUpdate.size == 1)
+                "Only one output should be consumed when validating" using (outputUpdate.size == 1)
+                "Input must be UserState" using (inputUpdate.single() is UserState)
+                "Output must be UserState" using (outputUpdate.single() is UserState)
+                "Command must be Update" using (command.value is Commands.Update)
+
 
             }
 
             is Commands.SendRequest -> requireThat {
+                val inputSendReq = tx.inputsOfType<UserState>()
+                val outputSendReq = tx.outRefsOfType<UserState>()
+                "Only one input UserState must be consumed" using (inputSendReq.size == 1)
+                "Only one output UserState must be created" using (outputSendReq.size == 1)
+                "Command must be SendRequest" using (command.value is Commands.SendRequest)
+                val inputSendReqState = inputSendReq.single()
+                val outputSendReqState = inputSendReq.single()
+               // "OutputState should have new Node" using (inputSendReqState.node != outputSendReqState.node)
+                "Name inputState and outputState" using (inputSendReqState.name == outputSendReqState.name)
+                "Age inputState and outputState" using (inputSendReqState.age == outputSendReqState.age)
+                "Address inputState and outputState" using (inputSendReqState.address == outputSendReqState.address)
+                "Birthday inputState and outputState" using (inputSendReqState.birthDate == outputSendReqState.birthDate)
+                "Status inputState and outputState" using (inputSendReqState.status == outputSendReqState.status)
+                "Religion inputState and outputState" using (inputSendReqState.religion == outputSendReqState.religion)
+                "isVerified inputState and outputState" using (inputSendReqState.isVerified == outputSendReqState.isVerified)
+//                val currentParticipantSize  = inputSendReqState.listOfParties.size //1
+//                val newParticipantSize = outputSendReqState.listOfParties.size //2
+//                "New one participant should be added" using ((currentParticipantSize+1) == newParticipantSize)
 
             }
 
