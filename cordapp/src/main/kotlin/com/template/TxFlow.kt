@@ -17,11 +17,17 @@ import net.corda.core.utilities.ProgressTracker
 class RequestFlow ( val owningParty: Party,
                     val IdState: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
-    override val progressTracker = ProgressTracker()
+    override val progressTracker = ProgressTracker(
+            GENERATING_TRANSACTION,
+            VERIFYING_TRANSACTION,
+            SIGNING_TRANSACTION,
+            NOTARIZE_TRANSACTION,
+            FINALISING_TRANSACTION )
 
     @Suspendable
     override fun call() : SignedTransaction {
 
+        progressTracker.currentStep = GENERATING_TRANSACTION
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
@@ -36,12 +42,16 @@ class RequestFlow ( val owningParty: Party,
                 .addOutputState(requester, Get_Contract_ID)
                 .addCommand(cmd)
 
+        progressTracker.currentStep = VERIFYING_TRANSACTION
         //verification of transaction
         txBuilder.verify(serviceHub)
 
+        progressTracker.currentStep = SIGNING_TRANSACTION
         //signed by the participants
         val partySigned = serviceHub.signInitialTransaction(txBuilder)
 
+        progressTracker.currentStep = NOTARIZE_TRANSACTION
+        progressTracker.currentStep = FINALISING_TRANSACTION
         //Notarize then Record the transaction
         return subFlow(FinalityFlow(partySigned))
 
@@ -52,10 +62,17 @@ class RequestFlow ( val owningParty: Party,
 @StartableByRPC
 class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
-    override val progressTracker = ProgressTracker()
+    override val progressTracker = ProgressTracker(
+            GENERATING_TRANSACTION,
+            VERIFYING_TRANSACTION,
+            SIGNING_TRANSACTION,
+            NOTARIZE_TRANSACTION,
+            FINALISING_TRANSACTION )
 
     @Suspendable
     override fun call() : SignedTransaction {
+
+        progressTracker.currentStep = GENERATING_TRANSACTION
 
         // Initiator flow logic goes here from GetState
         val requestCriteria = QueryCriteria.VaultQueryCriteria()
@@ -75,7 +92,6 @@ class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>()
         for (data in user.participants){            //search all the participant in the vault
             parties.add(data)                       //add the participants in the parties
         }
-
 
         //verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
@@ -108,12 +124,16 @@ class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>()
             txBuilder.addInputState(state)
         }
 
+        progressTracker.currentStep = VERIFYING_TRANSACTION
         //verification of transaction
         txBuilder.verify(serviceHub)
 
+        progressTracker.currentStep = SIGNING_TRANSACTION
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
+        progressTracker.currentStep = NOTARIZE_TRANSACTION
+        progressTracker.currentStep = FINALISING_TRANSACTION
         //Notarize then Record the transaction
         return subFlow(FinalityFlow(signedTx))
     }
@@ -123,10 +143,20 @@ class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>()
 class RemoveFlow(   val OwnParty: Party,
                     val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
-    override val progressTracker = ProgressTracker()
+    override val progressTracker = ProgressTracker(
+            GENERATING_TRANSACTION,
+            VERIFYING_TRANSACTION,
+            SIGNING_TRANSACTION,
+            NOTARIZE_TRANSACTION,
+            FINALISING_TRANSACTION
+    )
 
     @Suspendable
     override fun call() : SignedTransaction {
+
+        progressTracker.currentStep = GENERATING_TRANSACTION
+        //verify notary
+        val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         // Initiator flow logic goes here from UserState
         val userCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
@@ -141,9 +171,6 @@ class RemoveFlow(   val OwnParty: Party,
             parties.add(data)                       //add the participants in the parties
         }
         parties.remove(OwnParty)
-
-        //verify notary
-        val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         // belong to the transaction
         val outputState = UserState(
@@ -168,12 +195,16 @@ class RemoveFlow(   val OwnParty: Party,
                 .addOutputState(outputState,Get_Contract_ID)
                 .addCommand(cmd)
 
+        progressTracker.currentStep = VERIFYING_TRANSACTION
         //verification of transaction
         txBuilder.verify(serviceHub)
 
+        progressTracker.currentStep = SIGNING_TRANSACTION
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
+        progressTracker.currentStep = NOTARIZE_TRANSACTION
+        progressTracker.currentStep = FINALISING_TRANSACTION
         //Notarize then Record the transaction
         return subFlow(FinalityFlow(signedTx))
     }

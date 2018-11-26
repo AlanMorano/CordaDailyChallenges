@@ -28,11 +28,13 @@ class GetContract : Contract {
         requireThat {
             when(command.value){
                 is Commands.Request ->{
-                    "Transaction must have one output" using (tx.outputs.size == 1)
 
+                    "Transaction must have one output" using (tx.outputs.size == 1)
                 }
+
                 is Commands.Share ->{
 
+                    //"Transaction must have one output" using (tx.outputs.size == 1)
                 }
             }
         }

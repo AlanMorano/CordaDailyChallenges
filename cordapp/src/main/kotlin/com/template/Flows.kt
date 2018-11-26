@@ -23,11 +23,17 @@ class RegisterFlow ( val Name: String,
                      val Status: String,
                      val Religion: String) : FlowLogic<SignedTransaction>() {
 
-    override val progressTracker = ProgressTracker()
+    override val progressTracker = ProgressTracker(
+            GENERATING_TRANSACTION,
+            VERIFYING_TRANSACTION,
+            SIGNING_TRANSACTION,
+            NOTARIZE_TRANSACTION,
+            FINALISING_TRANSACTION )
 
     @Suspendable
     override fun call() : SignedTransaction{
 
+        progressTracker.currentStep = GENERATING_TRANSACTION
         // Initiator flow logic goes here.
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
@@ -44,15 +50,16 @@ class RegisterFlow ( val Name: String,
                 .addOutputState(outputState, User_Contract_ID)
                 .addCommand(cmd)
 
+        progressTracker.currentStep = VERIFYING_TRANSACTION
         //verification of transaction
         txBuilder.verify(serviceHub)
 
+        progressTracker.currentStep = SIGNING_TRANSACTION
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
-        //verify signature
-        signedTx.verify(serviceHub)
-
+        progressTracker.currentStep = NOTARIZE_TRANSACTION
+        progressTracker.currentStep = FINALISING_TRANSACTION
         //finalizing signature
         return subFlow(FinalityFlow(signedTx))
     }
@@ -68,10 +75,19 @@ class UpdateFlow ( val Name: String,
                    val Religion: String,
                    val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
-    override val progressTracker = ProgressTracker()
+    override val progressTracker = ProgressTracker(
+            GENERATING_TRANSACTION,
+            VERIFYING_TRANSACTION,
+            SIGNING_TRANSACTION,
+            NOTARIZE_TRANSACTION,
+            FINALISING_TRANSACTION )
 
     @Suspendable
     override fun call() : SignedTransaction {
+
+        progressTracker.currentStep = GENERATING_TRANSACTION
+        // verify notary
+        val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
@@ -83,9 +99,6 @@ class UpdateFlow ( val Name: String,
 //        val name = Vault.state.data.Name
 //        if (Name != name){
 //            throw IllegalArgumentException("Invalid Name") }
-
-        // verify notary
-        val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         // belong to the transaction
         val outputState = UserState(ourIdentity,Name,Age,Address,BirthDate,Status,Religion,
@@ -100,12 +113,16 @@ class UpdateFlow ( val Name: String,
                 .addOutputState(outputState, User_Contract_ID)
                 .addCommand(cmd)
 
+        progressTracker.currentStep = VERIFYING_TRANSACTION
         //verification of transaction
         txBuilder.verify(serviceHub)
 
+        progressTracker.currentStep = SIGNING_TRANSACTION
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
+        progressTracker.currentStep = NOTARIZE_TRANSACTION
+        progressTracker.currentStep = FINALISING_TRANSACTION
         //Notarize then Record the transaction
         return subFlow(FinalityFlow(signedTx))
     }
@@ -116,10 +133,19 @@ class UpdateFlow ( val Name: String,
 @StartableByRPC
 class VerifyFlow (val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
-    override val progressTracker = ProgressTracker()
+    override val progressTracker = ProgressTracker(
+            GENERATING_TRANSACTION,
+            VERIFYING_TRANSACTION,
+            SIGNING_TRANSACTION,
+            NOTARIZE_TRANSACTION,
+            FINALISING_TRANSACTION )
 
     @Suspendable
     override fun call() : SignedTransaction {
+
+        progressTracker.currentStep = GENERATING_TRANSACTION
+        // verify notary
+        val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
@@ -127,9 +153,6 @@ class VerifyFlow (val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>
         //get the information from UserState
         val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.single()
         val input = Vault.state.data
-
-        // verify notary
-        val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         // belong to the transaction
         val outputState = UserState(ourIdentity,input.Name,input.Age,
@@ -145,12 +168,16 @@ class VerifyFlow (val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>
                 .addOutputState(outputState, User_Contract_ID)
                 .addCommand(cmd)
 
+        progressTracker.currentStep = VERIFYING_TRANSACTION
         //verification of transaction
         txBuilder.verify(serviceHub)
 
+        progressTracker.currentStep = SIGNING_TRANSACTION
         //signed by the participants
         val signedTx = serviceHub.signInitialTransaction(txBuilder)
 
+        progressTracker.currentStep = NOTARIZE_TRANSACTION
+        progressTracker.currentStep = FINALISING_TRANSACTION
         //Notarize then Record the transaction
         return subFlow(FinalityFlow(signedTx))
     }
