@@ -82,9 +82,13 @@ object SendFlow {
 
             val requestStates = serviceHub.vaultService.queryBy<RequestState>().states
 
-            val inputtedRequestAndSendState = requestStates.find { stateAndRef -> stateAndRef.state.data.name == name }
+            val inputtedRequestAndSendState = requestStates.find { stateAndRef ->
+                (stateAndRef.state.data.name == name &&
+                        stateAndRef.state.data.infoOwner == this.ourIdentity &&
+                            stateAndRef.state.data.requestor == requestor)}
                     ?: throw IllegalArgumentException("No Request state that matches with name $name found.")
 
+            println(inputtedRequestAndSendState)
            val txCommand = Command(UserContract.Commands.SendRequest(), ourIdentity.owningKey)
 
             val txCommand2 = Command(RequestContract.Commands.AcceptRequest(), ourIdentity.owningKey)
