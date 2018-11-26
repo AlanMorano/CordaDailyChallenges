@@ -29,24 +29,37 @@ class UserContract : Contract {
         requireThat {
             when(command.value){
             is Commands.Register -> {
-                "Can't reissue an existing State" using (tx.inputs.isEmpty())
-                "Transaction must have one output" using (tx.outputs.size == 1)
-                //"Input States are signed by command Signer" using (tx.inputs.Node.owningKey in command.signers)
 
+                val regOutput = tx.outputStates.single() as UserState
+                "No inputs should be consumed" using (tx.inputs.isEmpty())
+                "Only one output state should be created" using (tx.outputs.size == 1)
+                "The output should be UserState" using (tx.getOutput(0) is UserState)
+                "The Signer must be signed" using (command.signers.toSet() == regOutput.parties.map { it.owningKey }.toSet())
             }
+
             is Commands.Update ->{
+
+                val upInput = tx.inputStates.single() as UserState
+                val upOutput = tx.outputStates.single() as UserState
                 "Transaction must have one input" using (tx.inputs.size == 1)
                 "Transaction must have one output" using (tx.outputs.size == 1)
-                //"Output States are signed by command Signer" using (tx.outputs.Node.owningKey in command.signers)
-
-
+                "The output should be UserState" using (tx.getOutput(0) is UserState)
+                "Input Id should be equal Id output " using (upInput.linearId == upOutput.linearId)
+                "The Signer must be signed" using (command.signers.toSet() == upOutput.parties.map { it.owningKey }.toSet())
             }
+
             is Commands.Verify ->{
+
+                val verInput = tx.inputStates.single() as UserState
+                val verOutput = tx.outputStates.single() as UserState
                 "Transaction must have one input" using (tx.inputs.size == 1)
                 "Transaction must have one output" using (tx.outputs.size == 1)
-                //"Output States are signed by command Signer" using (tx.outputs.Node.owningKey in command.signers)
+                "Input Id should be equal Id output " using (verInput.linearId == verOutput.linearId)
+                "The Signer must be signed" using (command.signers.toSet() == verOutput.parties.map { it.owningKey }.toSet())
+            }
+                else -> {}
+            }
 
-            }}
         }
         }
 
