@@ -17,6 +17,7 @@ class GetContract : Contract {
     interface Commands : CommandData {
         class Request : Commands
         class Share : Commands
+        class Remove : Commands
     }
 
     // A transaction is valid if the verify() function of the contract of all the transaction's input and output states
@@ -34,7 +35,11 @@ class GetContract : Contract {
 
                 is Commands.Share ->{
 
-                    //"Transaction must have one output" using (tx.outputs.size == 1)
+                    "Transaction must have one output" using (tx.outputs.size == 1)
+                }
+                is Commands.Remove ->{
+
+                    "Transaction must have one output" using (tx.outputs.size == 1)
                 }
             }
         }
@@ -49,6 +54,7 @@ class GetContract : Contract {
 data class GetState (val ownNode: Party,
                      val requestNode: Party,
                      val IdState: UniqueIdentifier) : ContractState {
+
     //participants are owningNode and requestingNode in this State
     override val participants = listOf(ownNode,requestNode)
 }
