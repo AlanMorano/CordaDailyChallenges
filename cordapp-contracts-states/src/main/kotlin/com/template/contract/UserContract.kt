@@ -43,8 +43,10 @@ class UserContract : Contract {
                 val outputValidate = tx.outputsOfType<UserState>()
                 "Only one input should be consumed when validating" using (inputValidate.size == 1)
                 "Only one output should be consumed when validating" using (outputValidate.size == 1)
-               "Input must be UserState" using (inputValidate.single() is UserState)
-                "Output must be UserState" using (outputValidate.single() is UserState)
+
+                "Input must be UserState" using (tx.inputStates[0] is UserState)
+                "Output must be UserState" using (tx.outputStates[0] is UserState)
+
                 "Input Verified must be false" using (!inputValidate.single().isVerified)
                 "Output Verified must be true" using (outputValidate.single().isVerified)
                 val inputValidateState = inputValidate.single()
@@ -65,8 +67,8 @@ class UserContract : Contract {
                 val outputUpdate = tx.outputsOfType<UserState>()
                 "Only one input should be consumed when validating" using (inputUpdate.size == 1)
                 "Only one output should be consumed when validating" using (outputUpdate.size == 1)
-                "Input must be UserState" using (inputUpdate.single() is UserState)
-                "Output must be UserState" using (outputUpdate.single() is UserState)
+                "Input must be UserState" using (tx.inputStates[0] is UserState)
+                "Output must be UserState" using (tx.inputStates[0] is UserState)
                 "Command must be Update" using (command.value is Commands.Update)
 
 

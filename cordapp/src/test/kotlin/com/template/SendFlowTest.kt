@@ -1,6 +1,7 @@
 package com.template
 
 import com.template.flow.RequestFlow
+import com.template.flow.SendFlow
 import com.template.flow.UserRegisterFlow
 import net.corda.testing.node.MockNetwork
 import net.corda.testing.node.StartedMockNode
@@ -27,22 +28,6 @@ class SendFlowTest {
         network.stopNodes()
     }
 
-    @Test
-    fun `hello`(){
-        val flow = UserRegisterFlow.Initiator("Lance", 9,"PH","JULY3","S","C")
-        val flow2 = RequestFlow.Initiator("PartyA","Lance" )
-        val flow3 = SendFlow.Initiator("PartyB","Lance")
 
-        PartyA.startFlow(flow)
-        PartyB.startFlow(flow2)
-        val future = PartyA.startFlow(flow3)
-        network.runNetwork()
-        val signedTransaction = future.get()
-        assertEquals(2,signedTransaction.tx.inputs.size)
-        assertEquals(2,signedTransaction.tx.outputs.size)
-
-
-
-    }
 
 }

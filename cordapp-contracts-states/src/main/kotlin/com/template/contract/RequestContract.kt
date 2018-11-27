@@ -26,7 +26,7 @@ class RequestContract : Contract {
 
                 "There is no input" using (tx.inputStates.isEmpty())
                 "There is exactly one output" using (tx.outputStates.size == 1)
-                "The output is of type RequestState" using (outputRequest.single() is RequestState)
+                "The output is of type RequestState" using (tx.outputStates[0] is RequestState)
                 "Accepted must be defaulted into false" using (!outputRequest.single().accepted)
                 "Only two parties are involved" using (outputRequest.single().listOfParties.size == 2)
 
