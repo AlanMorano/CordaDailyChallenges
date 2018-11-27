@@ -27,13 +27,14 @@ object UserRegisterFlow {
 
         @Suspendable
         override fun call(): SignedTransaction {
+            //Get first notary
             progressTracker.currentStep = GETTING_NOTARY
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
+            //Default verified value
             val verification = false
-
             progressTracker.currentStep = GENERATING_TRANSACTION
-            val userState = UserState(this.ourIdentity,name,age,address,birthday,status,religion,verification, listOf(ourIdentity)) //, listOf(ourIdentity)
+            val userState = UserState(this.ourIdentity,name,age,address,birthday,status,religion,verification, listOf(ourIdentity))
 
             val txCommand = Command(UserContract.Commands.Register(), userState.participants.map { it.owningKey })
             val txBuilder = TransactionBuilder(notary)

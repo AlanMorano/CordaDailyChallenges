@@ -29,28 +29,19 @@ object RequestFlow {
 
         @Suspendable
         override fun call(): SignedTransaction {
+
+            //Getting the first notary in the network map
             progressTracker.currentStep = GETTING_NOTARY
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
-
-
+            //Searching the serviceHub for the input infoOwner and gets it if it has a match, else, throw exc
             val infoOwnerRef = serviceHub.identityService.partiesFromName(infoOwner, false).singleOrNull()
                     ?: throw IllegalArgumentException("No match found for infoOwner $infoOwner.")
-//
-//            val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
-//            val userStates = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states
-//
-//            val inputUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == name }
-//                    ?: throw java.lang.IllegalArgumentException("No UserState that matches with name $name")
-
 
             progressTracker.currentStep = GENERATING_TRANSACTION
-
-
+            //Build transaction
             val txCommand = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
-
-
-//            val name1 = inputUserStateAndRef.state.data.name
+            //The state to be used as output
             val requestState = RequestState(infoOwnerRef, this.ourIdentity,name,false, listOf(infoOwnerRef,ourIdentity))
                      val txBuilder = TransactionBuilder(notary)
                              .addOutputState(requestState, Request_ID)

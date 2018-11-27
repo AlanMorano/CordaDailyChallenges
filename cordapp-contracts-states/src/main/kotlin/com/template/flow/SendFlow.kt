@@ -30,29 +30,25 @@ object SendFlow {
 
         @Suspendable
         override fun call(): SignedTransaction {
+
+            //Getting of notary
             progressTracker.currentStep = GETTING_NOTARY
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
+            //Query all unconsumed state
             val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
+
+            //Get all unconsumed states of type UserState
             val userStates = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states
 
+            //Get State And Ref of type UserState that is has a data name that matches with the input name
             val inputtedUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == name }
            ?: throw java.lang.IllegalArgumentException("No User state that matches with name")
 
-//            var inputtedUserStateAndRef : StateAndRef<UserState>? = null
-//
-//            for(x in userStates){
-//                if(x.state.data.name == name){
-//                    txBuilder.addInputState(x)
-//
-//                    inputtedUserStateAndRef = x
-//                }
-//            }
-
-
-
+            //Access the state and ref data
             val inputtedUserStateData = inputtedUserStateAndRef.state.data
 
+            //Prepare and copy current values of the StateAndRef to be used as outputs
             val name = inputtedUserStateData.name
             val age = inputtedUserStateData.age
             val address = inputtedUserStateData.address
@@ -61,14 +57,15 @@ object SendFlow {
             val religion = inputtedUserStateData.religion
             val isVerified = inputtedUserStateData.isVerified
 
+            //Get current participants of the StateAndRef and put it in this var
             var partiz = mutableListOf<Party>()
-
-
             for(singleParticipant in inputtedUserStateData.participants){
                 partiz.add(singleParticipant)
             }
+            //Add new participant
             partiz.add(requestor)
 
+            //participants + the new participant
             val listOfParties = partiz
 
 
@@ -79,12 +76,12 @@ object SendFlow {
             println(inputtedUserStateAndRef)
             println(userState)
 
-
-
             val outputRequestState = RequestState(this.ourIdentity, requestor,name,true, listOf(requestor, ourIdentity))
 
+            //Get all states with type RequestState
             val requestStates = serviceHub.vaultService.queryBy<RequestState>().states
 
+            //Get requestState that has data name, infoOwner, requestor equals to the inputted data
             val inputtedRequestAndSendState = requestStates.find { stateAndRef ->
                 (stateAndRef.state.data.name == name &&
                         stateAndRef.state.data.infoOwner == this.ourIdentity &&

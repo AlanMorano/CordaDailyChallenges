@@ -25,24 +25,25 @@ object UserValidateFlow {
 
         @Suspendable
         override fun call(): SignedTransaction {
+            //Get first notary
             progressTracker.currentStep = GETTING_NOTARY
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
-
             progressTracker.currentStep = GENERATING_TRANSACTION
 
-//            val criteria = QueryCriteria.VaultQueryCriteria()
-//            val inputState = serviceHub.vaultService.queryBy<UserState>(criteria).states.single()
-//            val inputStateData = inputState.state.data
-
+            //Get all states with type UserState
             val userStates = serviceHub.vaultService.queryBy<UserState>().states
 
+            //Get StateAndRef that matches the data name with the input name
             val inputUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == this.name }
                     ?: throw java.lang.IllegalArgumentException("No User state that matches with name")
 
             println(inputUserStateAndRef)
+
+            //Access UserStateAndRef data
             val inputStateData = inputUserStateAndRef.state.data
 
+            //Copy data from the accessed UserStateAndRef
             val node = inputStateData.node
             val name = inputStateData.name
             val age = inputStateData.age
@@ -50,6 +51,7 @@ object UserValidateFlow {
             val birthday = inputStateData.birthDate
             val status = inputStateData.status
             val religion = inputStateData.religion
+            //Verified = Changed to true
             val isVerified = true
             val list = listOf(ourIdentity)
 

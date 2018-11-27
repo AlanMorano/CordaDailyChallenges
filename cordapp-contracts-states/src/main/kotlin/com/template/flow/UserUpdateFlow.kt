@@ -30,20 +30,27 @@ object UserUpdateFlow {
 
         @Suspendable
         override fun call(): SignedTransaction {
+            //Get first notary
             progressTracker.currentStep = GETTING_NOTARY
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
 
 
             progressTracker.currentStep = GENERATING_TRANSACTION
+            //Query all unconsumed states
             val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
+
+            //Get all state with type UserState with criteria : UNCONSUMED
             val userStates = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states
 
+            //Get StateAndRef that matches the input requested name with the data name of the state
             val inputtedUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == reqName }
            ?: throw java.lang.IllegalArgumentException("No User state that matches with name")
 
 
+            //Copy the participants of the State to be used as output
             val partiz = inputtedUserStateAndRef.state.data.listOfParties
+
             val outputUserState = UserState(ourIdentity,name,age,address,birthday,status,religion,inputtedUserStateAndRef.state.data.isVerified, partiz)
             val txCommand = Command(UserContract.Commands.Update(), ourIdentity.owningKey)
             val txBuilder = TransactionBuilder(notary)
