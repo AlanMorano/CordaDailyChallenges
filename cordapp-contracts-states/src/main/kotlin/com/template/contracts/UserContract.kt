@@ -15,7 +15,9 @@ class UserContract : Contract {
         class Register : Commands
         class Update : Commands
         class Verify : Commands
-        class Disseminate: Commands
+        class Approved: Commands
+        class Request : Commands
+        class Remove : Commands
     }
 
     override fun verify(tx: LedgerTransaction){
@@ -34,6 +36,17 @@ class UserContract : Contract {
                 is Commands.Verify ->{
                     "Transaction must have one input" using (tx.inputs.size == 1)
                     "Transaction must have one output" using (tx.outputs.size == 1)
+
+                }
+                is Commands.Approved ->{
+
+                }
+
+                is Commands.Request ->{
+
+                }
+
+                is Commands.Request ->{
 
                 }
             }
