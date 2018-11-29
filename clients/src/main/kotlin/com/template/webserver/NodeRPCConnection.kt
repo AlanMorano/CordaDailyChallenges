@@ -1,4 +1,4 @@
-package net.corda.server
+package com.template.webserver
 
 import net.corda.client.rpc.CordaRPCClient
 import net.corda.client.rpc.CordaRPCConnection
@@ -15,9 +15,9 @@ private const val CORDA_NODE_HOST = "config.rpc.host"
 private const val CORDA_RPC_PORT = "config.rpc.port"
 
 /**
- * Wraps a node RPC proxy.
+ * Wraps an RPC connection to a Corda node.
  *
- * The RPC proxy is configured based on the properties in `application.properties`.
+ * The RPC connection is configured using command line arguments.
  *
  * @param host The host of the node we are connecting to.
  * @param rpcPort The RPC port of the node we are connecting to.
