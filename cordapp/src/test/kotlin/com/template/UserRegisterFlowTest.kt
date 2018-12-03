@@ -1,11 +1,13 @@
 package com.template
 
+import com.template.contract.UserContract
 import com.template.flow.RequestFlow
 import com.template.flow.SendFlow
 import com.template.flow.UserRegisterFlow
 import net.corda.testing.node.MockNetwork
 import net.corda.testing.node.StartedMockNode
 import org.junit.After
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -13,15 +15,15 @@ import kotlin.test.assertEquals
 class UserRegisterFlowTest {
 
     private lateinit var network : MockNetwork
-    private lateinit var PartyA : StartedMockNode
-    private lateinit var PartyB : StartedMockNode
+    private lateinit var NodeA : StartedMockNode
+    private lateinit var NodeB : StartedMockNode
 
 
     @Before
     fun setup() {
         network = MockNetwork(listOf("com.template"))
-        PartyA = network.createPartyNode(null)
-        PartyB = network.createPartyNode(null)
+        NodeA = network.createPartyNode(null)
+        NodeB = network.createPartyNode(null)
     }
     @After
     fun tearDown(){
@@ -31,10 +33,60 @@ class UserRegisterFlowTest {
 
     @Test
     @Throws(Exception::class)
-    fun `No Inputs should be consumed`(){
-
+    fun `NoInputsShouldBeConsumed`(){
+        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val future = NodeA.startFlow(flow)
+        network.runNetwork()
+        val signedTransaction = future.get()
+        assertEquals(0,signedTransaction.tx.inputs.size)
     }
 
+    @Test
+    @Throws(Exception::class)
+    fun `OneOutputShouldBeCreated`(){
+        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val future = NodeA.startFlow(flow)
+        network.runNetwork()
+        val signedTransaction = future.get()
+        assertEquals(1,signedTransaction.tx.outputs.size)
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun `transactionConstructedByFlowUsesTheCorrectNotary`() {
+        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val future = NodeA.startFlow(flow)
+        network.runNetwork()
+        val signedTransaction = future.get()
+        assertEquals(1, signedTransaction.tx.outputStates.size)
+        val (_,_ , notary) = signedTransaction.tx.outputs[0]
+        assertEquals(network.notaryNodes[0].info.legalIdentities[0], notary)
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun `transactionConstructedByFlowHasOneIssueCommand`() {
+        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val future = NodeA.startFlow(flow)
+        network.runNetwork()
+        val signedTransaction = future.get()
+        Assert.assertEquals(1, signedTransaction.tx.commands.size)
+        val (value) = signedTransaction.tx.commands[0]
+        assert(value is UserContract.Commands.Register)
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun `RegisterFlowHasOneCommandOwnerIsSigner`() {
+        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val future = NodeA.startFlow(flow)
+        network.runNetwork()
+        val signedTransaction = future.get()
+        Assert.assertEquals(1, signedTransaction.tx.commands.size)
+        val (_, signers) = signedTransaction.tx.commands[0]
+        Assert.assertEquals(1, signers.size.toLong())
+        assert(signers.contains(NodeA.info.legalIdentities[0].owningKey))
+    }
 
 
 }

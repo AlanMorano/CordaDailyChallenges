@@ -65,8 +65,8 @@ class UserContract : Contract {
             is Commands.Update -> requireThat {
                 val inputUpdate = tx.inputsOfType<UserState>()
                 val outputUpdate = tx.outputsOfType<UserState>()
-                "Only one input should be consumed when validating" using (inputUpdate.size == 1)
-                "Only one output should be consumed when validating" using (outputUpdate.size == 1)
+                "Only one input should be consumed when updating" using (inputUpdate.size == 1)
+                "Only one output should be created when updating" using (outputUpdate.size == 1)
                 "Input must be UserState" using (tx.inputStates[0] is UserState)
                 "Output must be UserState" using (tx.inputStates[0] is UserState)
                 "Command must be Update" using (command.value is Commands.Update)
