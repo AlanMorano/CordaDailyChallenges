@@ -10,7 +10,7 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class SendFlowTest {
+class UserRegisterFlowTest {
 
     private lateinit var network : MockNetwork
     private lateinit var PartyA : StartedMockNode
@@ -26,6 +26,13 @@ class SendFlowTest {
     @After
     fun tearDown(){
         network.stopNodes()
+    }
+
+
+    @Test
+    @Throws(Exception::class)
+    fun `No Inputs should be consumed`(){
+
     }
 
 
