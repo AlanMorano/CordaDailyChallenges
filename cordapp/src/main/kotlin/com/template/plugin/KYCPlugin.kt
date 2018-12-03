@@ -6,7 +6,10 @@ import java.util.function.Function
 
 class KYCPlugin : WebServerPluginRegistry {
     override val webApis = listOf(Function(::SuperAPI))
-//    override val staticServeDirs = mapOf(
-//            "kyc" to javaClass.classLoader.getResource("static").toExternalForm())
+
+
+
+    override val staticServeDirs = mapOf(
+            "kyc" to javaClass.classLoader.getResource("static").toExternalForm())
 
 }

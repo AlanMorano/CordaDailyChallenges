@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController
  * Define your API endpoints here.
  */
 @RestController
-@RequestMapping("/") // The paths for HTTP requests are relative to this base path.
+@RequestMapping("/kyc") // The paths for HTTP requests are relative to this base path.
 class Controller(rpc: NodeRPCConnection) {
 
     companion object {
