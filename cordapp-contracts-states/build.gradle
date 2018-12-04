@@ -2,30 +2,40 @@ apply plugin: 'kotlin'
 apply plugin: 'net.corda.plugins.cordapp'
 apply plugin: 'net.corda.plugins.cordformation'
 
+
+
 sourceSets {
     main {
         resources {
             srcDir rootProject.file("config/dev")
         }
     }
+   
 }
+
+
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
-    compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1'
+
 
     // Corda dependencies.
+
+
     cordaCompile "$corda_release_group:corda-core:$corda_release_version"
     cordaRuntime "$corda_release_group:corda:$corda_release_version"
     cordaRuntime "$corda_release_group:corda-webserver:$corda_release_version"
-    cordaCompile "$corda_release_group:corda-core:$corda_release_version"
-    cordaCompile "$corda_release_group:corda-node-api:$corda_release_version"
-    cordaCompile "$corda_release_group:corda-rpc:$corda_release_version"
-    cordaCompile "$corda_release_group:corda-node-api:$corda_release_version"
-    cordaCompile "$corda_release_group:corda-webserver-impl:$corda_release_version"
-    cordaRuntime "$corda_release_group:corda:$corda_release_version"
-    cordaRuntime "$corda_release_group:corda-webserver:$corda_release_version"
+    cordaCompile "net.corda:corda-webserver-impl:$corda_release_version"
+
+
+    testCompile "$corda_release_group:corda-node-driver:$corda_release_version"
+    compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1'
+    // CorDapp dependencies.
+
+
 }
+
+
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
