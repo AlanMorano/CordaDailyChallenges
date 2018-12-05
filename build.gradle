@@ -1,7 +1,7 @@
 buildscript {
     ext {
         corda_release_group = 'net.corda'
-        corda_release_version = '3.2-corda' //3.2
+        corda_release_version = '3.2-corda' //3.3
         corda_gradle_plugins_version = '3.1.0' //3.2.1 , 3.1.0
         kotlin_version = '1.1.60'
         junit_version = '4.12'
@@ -100,7 +100,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         p2pPort 10002
         rpcSettings {
             address("localhost:10003")
-            adminAddress("localhost:10043")
+            adminAddress("localhost:10004")
         }
         cordapps = [
                 "$project.group:cordapp-contracts-states:$project.version",
@@ -113,9 +113,9 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         p2pPort 10005
         rpcSettings {
             address("localhost:10006")
-            adminAddress("localhost:10046")
+            adminAddress("localhost:10007")
         }
-        webPort 10007
+        //webPort 10008
         cordapps = [
                 "$project.group:cordapp-contracts-states:$project.version",
                 "$project.group:cordapp:$project.version",
@@ -125,12 +125,12 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
     }
     node {
         name "O=PartyB,L=Cebu,C=PH"
-        p2pPort 10008
+        p2pPort 10009
         rpcSettings {
-            address("localhost:10009")
-            adminAddress("localhost:10049")
+            address("localhost:10010")
+            adminAddress("localhost:10011")
         }
-        webPort 10010
+       // webPort 10012
         cordapps = [
                 "$project.group:cordapp-contracts-states:$project.version",
                 "$project.group:cordapp:$project.version",

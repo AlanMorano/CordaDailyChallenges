@@ -39,7 +39,13 @@ dependencies {
 
     testCompile "$corda_release_group:corda-node-driver:$corda_release_version"
     cordaRuntime "$corda_release_group:corda-webserver:$corda_release_version"
+
     cordaCompile "$corda_release_group:corda-webserver-impl:$corda_release_version"
+
+    compile("org.springframework.boot:spring-boot-starter-websocket:$spring_boot_version") {
+        exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
+    }
+
 
 
     // CorDapp dependencies.
