@@ -52,3 +52,17 @@ task runTemplateServer(type: JavaExec) {
     main = 'com.template.webserver.ServerKt'
     args '--server.port=10050', '--config.rpc.host=localhost', '--config.rpc.port=10006', '--config.rpc.username=user1', '--config.rpc.password=test'
 }
+
+task runPartyAServer(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.template.webserver.ServerKt'
+    environment "server.port", "8080"
+    environment "config.rpc.port", "10006"
+}
+
+task runPartyBServer(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.template.webserver.ServerKt'
+    environment "server.port", "8081"
+    environment "config.rpc.port", "10009"
+}

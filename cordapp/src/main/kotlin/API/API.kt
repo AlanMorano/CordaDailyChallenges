@@ -16,7 +16,7 @@ import javax.ws.rs.Path
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
-@Path("api")
+@Path("/api")
 class API(val rpcOps: CordaRPCOps) {
     private val me = rpcOps.nodeInfo().legalIdentities.first().name
 
@@ -35,7 +35,7 @@ class API(val rpcOps: CordaRPCOps) {
      * Returns the node's name.
      */
     @GET
-    @Path("me")
+    @Path("/me")
     @Produces(MediaType.APPLICATION_JSON)
     fun whoami() = mapOf("me" to me.toString())
 
@@ -44,7 +44,7 @@ class API(val rpcOps: CordaRPCOps) {
      * using the [IdentityService].
      */
     @GET
-    @Path("peers")
+    @Path("/peers")
     @Produces(MediaType.APPLICATION_JSON)
     fun getPeers(): Map<String, List<String>> {
         return mapOf("peers" to rpcOps.networkMapSnapshot()
@@ -59,7 +59,7 @@ class API(val rpcOps: CordaRPCOps) {
      * Hint - Use [rpcOps] to query the vault all unconsumed [UserState]s
      */
     @GET
-    @Path("users")
+    @Path("/users")
     @Produces(MediaType.APPLICATION_JSON)
     fun getIOUs(): List<StateAndRef<ContractState>> {
         // Filter by state type: Users.
