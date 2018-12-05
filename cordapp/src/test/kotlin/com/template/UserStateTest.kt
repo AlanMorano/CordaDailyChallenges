@@ -81,10 +81,6 @@ class UserStateTest {
     fun `IsLinearState`(){
         assert(LinearState::class.java.isAssignableFrom(UserState::class.java))
     }
-    @Test
-    fun `IsQueryableState`(){
-        assert(QueryableState::class.java.isAssignableFrom(UserState::class.java))
-    }
 
     @Test
     fun `CheckTokenStateParameterOrdering`(){
@@ -96,7 +92,8 @@ class UserStateTest {
         val birthDateIndex = fields.indexOf(UserState::class.java.getDeclaredField("birthDate"))
         val statusIndex = fields.indexOf(UserState::class.java.getDeclaredField("status"))
         val religionIndex = fields.indexOf(UserState::class.java.getDeclaredField("religion"))
-        val linearIdIndex = fields.indexOf(UserState::class.java.getDeclaredField("linearId"))
+        val isVerifiedIndex = fields.indexOf(UserState::class.java.getDeclaredField("isVerified"))
+        val partiesIndex = fields.indexOf(UserState::class.java.getDeclaredField("listOfParties"))
 
         assert(nodeIndex<nameIndex)
         assert(nameIndex<ageIndex)
@@ -104,7 +101,8 @@ class UserStateTest {
         assert(addressIndex<birthDateIndex)
         assert(birthDateIndex<statusIndex)
         assert(statusIndex<religionIndex)
-        assert(religionIndex<linearIdIndex)
+        assert(religionIndex<isVerifiedIndex)
+        assert(religionIndex<partiesIndex)
     }
 
 
