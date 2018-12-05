@@ -44,7 +44,8 @@ springBoot {
 task runTemplateClient(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'com.template.ClientKt'
-    args 'localhost:10002', 'user1', 'test'
+    args 'localhost:10008', 'user1', 'test'
+    args 'localhost:10012', 'user1', 'test'
 }
 
 task runTemplateServer(type: JavaExec) {
@@ -65,4 +66,20 @@ task runPartyBServer(type: JavaExec){
     main = 'com.template.webserver.ServerKt'
     environment "server.port", "10012"
     environment "config.rpc.port", "10010"
+
+
 }
+//task runPartyAandPartyBServer(type: JavaExec){
+//    classpath = sourceSets.main.runtimeClasspath
+//    main = 'com.template.webserver.ServerKt'
+//    environment "server.port", "10008"
+//    environment "config.rpc.port", "10006"
+//
+//    classpath = sourceSets.main.runtimeClasspath
+//    main = 'com.template.webserver.ServerKt'
+//    environment "server.port", "10012"
+//    environment "config.rpc.port", "10010"
+//
+//
+//
+//}
