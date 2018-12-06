@@ -1,4 +1,4 @@
-package com.template.api
+package com.template.wew
 
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.messaging.CordaRPCOps
