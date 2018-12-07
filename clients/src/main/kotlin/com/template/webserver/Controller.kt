@@ -1,24 +1,15 @@
 package com.template.webserver
 
-import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import com.template.UserState
-import net.corda.core.contracts.ContractState
-import net.corda.core.contracts.StateAndRef
 import net.corda.core.contracts.hash
 import net.corda.core.messaging.vaultQueryBy
-import net.corda.core.node.services.Vault
-import net.corda.core.node.services.vault.QueryCriteria
 import net.corda.core.utilities.loggerFor
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
-import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDateTime
 import java.time.ZoneId
-
 
 
 /**
@@ -47,9 +38,15 @@ class Controller(
                 "status" to Status,
                 "religion" to Religion,
                 "linead Id" to linearId,
+                "list parties" to parties.toString(),
                 "notary" to notaries(),
                 "txhash" to hashCode(),
                 "txhasss" to hash()
+        )
+    }
+    private fun UserState.toName(): Map<String, Any>{
+        return mapOf(
+                "name" to Name
         )
     }
 
@@ -81,26 +78,27 @@ class Controller(
     @GetMapping(value = "/flows", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     private fun flows() = rpcOps.registeredFlows().toString()
 
-    @GetMapping(value = "/states", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
-    private fun states() = rpcOps.vaultQueryBy<ContractState>().states.toString()
-
-    @GetMapping(value = "/users", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
-    private fun users() = rpcOps.vaultQueryBy<ContractState>(QueryCriteria.VaultQueryCriteria()).states.toString()
-
     /** Returns a list of existing User's. */
-    @GetMapping(value = "/details", produces = arrayOf("application/json"))
+    @GetMapping(value = "/users", produces = arrayOf("application/json"))
     private fun details(): List<Map<String, Any>> {
-        val yoStateAndRefs = rpc.proxy.vaultQueryBy<UserState>().states
-        val yoStates = yoStateAndRefs.map { it.state.data }
-        return yoStates.map { it.toJson() }
+        val userStateAndRefs = rpc.proxy.vaultQueryBy<UserState>().states
+        val userStates = userStateAndRefs.map { it.state.data }
+        return userStates.map { it.toJson() }
     }
 
     @GetMapping(value = "/getnames", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     private fun getnames() : Map<String, List<String>>{
-        val cosStateAndRef = rpc.proxy.vaultQueryBy<UserState>().states
-        val cosStates = cosStateAndRef.map { it.state.data }
-        val statename = cosStates.map { it.Name }
+        val userStateAndRef = rpc.proxy.vaultQueryBy<UserState>().states
+        val userStates = userStateAndRef.map { it.state.data }
+        val statename = userStates.map { it.Name }
         return mapOf("name" to statename)
     }
 
+    /** Returns a list of existing User's. */
+    @GetMapping(value = "/getNames", produces = arrayOf("application/json"))
+    private fun getNames(): List<Map<String, Any>> {
+        val userStateAndRefs = rpc.proxy.vaultQueryBy<UserState>().states
+        val userStates = userStateAndRefs.map { it.state.data }
+        return userStates.map { it.toName() }
+    }
 }
