@@ -26,6 +26,7 @@ dependencies {
     compile "org.apache.logging.log4j:log4j-slf4j-impl:${log4j_version}"
     compile "org.apache.logging.log4j:log4j-web:${log4j_version}"
     compile "org.slf4j:jul-to-slf4j:$slf4j_version"
+
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
@@ -69,17 +70,17 @@ task runPartyBServer(type: JavaExec){
 
 
 }
-//task runPartyAandPartyBServer(type: JavaExec){
-//    classpath = sourceSets.main.runtimeClasspath
-//    main = 'com.template.webserver.ServerKt'
-//    environment "server.port", "10008"
-//    environment "config.rpc.port", "10006"
-//
-//    classpath = sourceSets.main.runtimeClasspath
-//    main = 'com.template.webserver.ServerKt'
-//    environment "server.port", "10012"
-//    environment "config.rpc.port", "10010"
-//
-//
-//
-//}
+task runPartyAandPartyBServer(type: JavaExec){
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.template.webserver.ServerKt'
+    environment "server.port", "10008"
+    environment "config.rpc.port", "10006"
+
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.template.webserver.ServerKt'
+    environment "server.port", "10012"
+    environment "config.rpc.port", "10010"
+
+
+
+}

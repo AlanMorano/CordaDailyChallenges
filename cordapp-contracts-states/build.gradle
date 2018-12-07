@@ -21,6 +21,8 @@ dependencies {
 
     testCompile "$corda_release_group:corda-node-driver:$corda_release_version"
     compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1'
+
+    cordaCompile "net.corda:corda-jackson:$corda_release_version"
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {

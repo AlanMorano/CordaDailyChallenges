@@ -16,6 +16,7 @@ private open class Starter
  */
 fun main(args: Array<String>) {
     val app = SpringApplication(Starter::class.java)
-    app.webApplicationType = SERVLET
+    //app.webApplicationType = SERVLET
+    app.isWebEnvironment = true
     app.run(*args)
 }
