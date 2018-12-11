@@ -30,6 +30,7 @@ class UserAccountRegisterFlow {
         override val progressTracker = ProgressTracker(GETTING_NOTARY, GENERATING_TRANSACTION,
                 VERIFYING_TRANSACTION, SIGNING_TRANSACTION, FINALISING_TRANSACTION)
 
+
         @Suspendable
         override fun call(): SignedTransaction {
             //Get first notary
@@ -37,6 +38,7 @@ class UserAccountRegisterFlow {
             val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
             progressTracker.currentStep = GENERATING_TRANSACTION
+
             val userState = UserAccountState(firstName,middleName,lastName,userName,password.md5(),email,role, listOf(ourIdentity))
             val txCommand = Command(UserAccountContract.Commands.Register(), userState.participants.map { it.owningKey })
             val txBuilder = TransactionBuilder(notary)
@@ -57,8 +59,6 @@ class UserAccountRegisterFlow {
 
 
         }
-
-
         fun String.sha512(): String {
             return this.hashWithAlgorithm("SHA-512")
         }
@@ -66,7 +66,7 @@ class UserAccountRegisterFlow {
         private fun String.hashWithAlgorithm(algorithm: String): String {
             val digest = MessageDigest.getInstance(algorithm)
             val bytes = digest.digest(this.toByteArray(Charsets.UTF_8))
-            return bytes.fold("", { str, it -> str + "%02x".format(it) })
+            return bytes.fold("") { str, it -> str + "%02x".format(it) }
         }
 
 
@@ -74,7 +74,11 @@ class UserAccountRegisterFlow {
             val md = MessageDigest.getInstance("MD5")
             return BigInteger(1, md.digest(toByteArray())).toString(16).padStart(32, '0')
         }
+
+
+
     }
+
 
 
 }
