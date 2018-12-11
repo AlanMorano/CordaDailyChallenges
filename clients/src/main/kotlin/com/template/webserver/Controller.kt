@@ -1,20 +1,18 @@
 package com.template.webserver
 
+import com.template.states.RequestState
 import com.template.states.UserState
-import net.corda.core.contracts.ContractState
 import net.corda.core.messaging.vaultQueryBy
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime
-import java.time.ZoneId
-import javax.ws.rs.core.MediaType
-import net.corda.client.jackson.JacksonSupport
-import net.corda.core.contracts.StateAndRef
-
-
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import javax.ws.rs.QueryParam
+import javax.ws.rs.core.Response
 
 
 private const val CONTROLLER_NAME = "config.controller.name"
@@ -27,7 +25,7 @@ private const val CONTROLLER_NAME = "config.controller.name"
 
 
 @RestController
-@RequestMapping("/") // The paths for HTTP requests are relative to this base path.
+@RequestMapping("/kyc") // The paths for HTTP requests are relative to this base path.
 class Controller(
         private val rpc: NodeRPCConnection,
         @Value("\${$CONTROLLER_NAME}") private val controllerName: String ) {
@@ -39,51 +37,63 @@ class Controller(
 
     private val proxy = rpc.proxy
 
+    private fun UserState.toJson(): Map<String, Any>{
+        return mapOf(
+                "node" to node.name.toString(),
+                "name" to name,
+                "age" to age,
+                "address" to address,
+                "birthDate" to birthDate,
+                "status" to status,
+                "religion" to religion,
+                "isVerified" to isVerified,
+                "listOfParties" to listOfParties.toString(),
+                "linearId" to linearId.toString()
 
+        )
+    }
+    private fun RequestState.toJson(): Map<String, Any>{
+        return mapOf(
+                "infoOwner" to infoOwner.name.toString(),
+                "requestor" to requestor.name.toString(),
+                "name" to name,
+                "listOfParties" to listOfParties.toString(),
+                "linearId" to linearId.toString()
+        )
+    }
+
+
+    /**
+     * Returns status
+     */
     @GetMapping(value = "/status", produces = arrayOf("application/json"))
+    @ResponseBody
     private fun status() = mapOf("status" to "200")
 
-    @GetMapping(value = "/servertime", produces = arrayOf("application/json"))
-    private fun serverTime() = LocalDateTime.ofInstant(proxy.currentNodeTime(), ZoneId.of("UTC")).toString()
+    /**
+     * Returns server time
+     */
+    @GetMapping(value = "/servertime", produces = arrayOf("application/json") )
+    private fun getServerTime(): Map<String, Any>{
+        val currentDateTime = LocalDateTime.now()
+        val date = currentDateTime.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
+        val time = currentDateTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM))
+        return mapOf("date" to date, "time" to time)
 
-    @GetMapping(value = "/addresses", produces = arrayOf("application/json"))
-    private fun addresses() = proxy.nodeInfo().addresses.toString()
-
-    @GetMapping(value = "/identities", produces = arrayOf("application/json"))
-    private fun identities() = proxy.nodeInfo().legalIdentities.toString()
-
-    @GetMapping(value = "/platformversion", produces = arrayOf("application/json"))
-    private fun platformVersion() = proxy.nodeInfo().platformVersion.toString()
-
-    @GetMapping(value = "/peers", produces = arrayOf("application/json"))
-    private fun peers() = proxy.networkMapSnapshot().flatMap { it.legalIdentities }.toString()
-
-    @GetMapping(value = "/notaries", produces = arrayOf("application/json"))
-    private fun notaries() = proxy.notaryIdentities().toString()
-
-    @GetMapping(value = "/flows", produces = arrayOf("application/json"))
-    private fun flows() = proxy.registeredFlows().toString()
-
-    @GetMapping(value = "/states", produces = arrayOf("application/json"))
-    private fun states() = proxy.vaultQueryBy<UserState>().states.toString()
-
-
-//    private fun UserState.toJson(): Map<String, String>{
-//        return mapOf("node" to node.toString(), "name" to name, "age" to age.toString())
-//    }
+    }
 
     /** Returns the node's name. */
     @GetMapping(value = "/me", produces = arrayOf("application/json"))
-    private fun myName() = mapOf("me" to myIdentity.organisation)
+    private fun myName() = mapOf("me" to myIdentity.toString())
 
-    @GetMapping(value = "/peersnames", produces = arrayOf("application/json"))
+    @GetMapping(value = "/peers", produces = arrayOf("application/json"))
     private fun peersNames(): Map<String, List<String>> {
-        val nodes = rpc.proxy.networkMapSnapshot()
+        val nodes = proxy.networkMapSnapshot()
         val nodeNames = nodes.map {
             it.legalIdentities.first().name
         }
         val filteredNodeNames = nodeNames.filter {
-            it.organisation !in listOf(controllerName, myIdentity)
+            it.organisation  !in listOf(controllerName, myIdentity)
         }
         val filteredNodeNamesToStr = filteredNodeNames.map {
             it.toString()
@@ -91,32 +101,80 @@ class Controller(
         return mapOf("peers" to filteredNodeNamesToStr)
     }
 
-    @GetMapping(value = "/userStates", produces = arrayOf("application/json"))
-    private fun getUserStates(): Map<String, List<UserState>>{
-
-
-
-
-        val userStateAndRefs = proxy.vaultQueryBy<UserState>().states
-
-        val mapper = JacksonSupport.createNonRpcMapper()
-        val json = mapper.writeValueAsString(userStateAndRefs)
-
+    /**
+     * Return all UserState
+     */
+    @GetMapping(value = "/userstates", produces = arrayOf("application/json"))
+    private fun getUserStates(): Map<String, Any>{
+        val userStateAndRefs = rpc.proxy.vaultQueryBy<UserState>().states
         val userStates = userStateAndRefs.map { it.state.data }
-
-        val userStateData = userStates.map { state ->
-            UserState(state.node,
-                    state.name,
-                    state.age,
-                    state.address,
-                    state.birthDate,
-                    state.status,
-                    state.religion,
-                    state.isVerified,
-                    state.listOfParties,
-                    state.linearId)
-        }
-        return mapOf("userStates" to  userStateData)
+        val list1 = userStates.map { it.toJson() }
+        val status = "status" to "success"
+        val message = "message" to "successful in getting ContractState of type UserState"
+        return mapOf(status,message, "result" to list1)
     }
+
+    /**
+     * Return all RequestState
+     */
+    @GetMapping(value = "/requeststates", produces = arrayOf("application/json"))
+    private fun getRequestStates(): Map<String, Any>{
+
+        val requestStateAndRefs = rpc.proxy.vaultQueryBy<RequestState>().states
+        val requestStates = requestStateAndRefs.map { it.state.data }
+        val list1 = requestStates.map { it.toJson() }
+        val status = "status" to "success"
+        val message = "message" to "successful in getting ContractState of type UserState"
+        return mapOf(status,message,"result" to list1)
+    }
+
+    /**
+     *Login
+     */
+    @PostMapping(value = "/login", produces = arrayOf("application/json"))
+    private fun login(
+            @RequestParam("username") username: String,
+            @RequestParam("password") password: String): ResponseEntity<Map<String, Any>>
+    {
+        val(status, message) = try {
+            if(username == "testuser" && password == "testpass"){
+            HttpStatus.CREATED to "Login Success"
+            }else
+                HttpStatus.BAD_REQUEST to "Login Failed"
+        } catch (e: Exception){
+                HttpStatus.BAD_REQUEST to "Failed"
+    }
+
+        val dummyName = mapOf("firstname" to "Xtian", "middlename" to "Pogi", "lastname" to "Dismaya")
+        val dummyData = mapOf(
+                "username" to "testuser",
+                "accountId" to "12345678",
+                "name" to dummyName)
+        val result : Any
+       if(status==HttpStatus.CREATED) result = dummyData
+        else result = "No data"
+      val mess =  mapOf("status" to status,
+              "message" to message, "result" to result)
+
+        return ResponseEntity.status(status).body(mess)
+    }
+
+
+//    @PostMapping(value = "user", produces = arrayOf("application/json"))
+//    private fun create(
+//            @RequestParam("name") : String,
+//            @RequestParam("age") : Int,
+//            @RequestParam("address") : String,
+//            @RequestParam("birthDate") : String,
+//            @RequestParam("status") : String,
+//            @RequestParam("religion") : String) : ResponseEntity<Map<String, Any>>
+
+
+
+
+
+
+
+
 
 }

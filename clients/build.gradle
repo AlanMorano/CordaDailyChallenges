@@ -19,9 +19,7 @@ dependencies {
     compile project(":cordapp-contracts-states")
     compile project(":cordapp")
 
-    compile("org.springframework.boot:spring-boot-starter-websocket:$spring_boot_version") {
-        exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
-    }
+    compile group: 'org.springframework.boot', name: 'spring-boot-gradle-plugin', version: '2.1.1.RELEASE', ext: 'pom'
 
     compile "org.apache.logging.log4j:log4j-slf4j-impl:${log4j_version}"
     compile "org.apache.logging.log4j:log4j-web:${log4j_version}"
@@ -70,17 +68,4 @@ task runPartyBServer(type: JavaExec){
 
 
 }
-task runPartyAandPartyBServer(type: JavaExec){
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'com.template.webserver.ServerKt'
-    environment "server.port", "10008"
-    environment "config.rpc.port", "10006"
 
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'com.template.webserver.ServerKt'
-    environment "server.port", "10012"
-    environment "config.rpc.port", "10010"
-
-
-
-}
