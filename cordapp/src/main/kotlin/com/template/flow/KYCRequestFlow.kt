@@ -1,23 +1,20 @@
 package com.template.flow
 
 import co.paralleluniverse.fibers.Suspendable
-import com.template.contract.RequestContract
-import com.template.contract.RequestContract.Companion.Request_ID
+import com.template.contract.RequestKYCContract
+import com.template.contract.RequestKYCContract.Companion.Request_ID
 import com.template.states.RequestState
-import com.template.states.UserState
 import net.corda.core.contracts.Command
 import net.corda.core.flows.FinalityFlow
 import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.flows.StartableByRPC
-import net.corda.core.node.services.queryBy
-import net.corda.core.node.services.vault.QueryCriteria
 
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
-object RequestFlow {
+object RequestKYCFlow {
 
     @InitiatingFlow
     @StartableByRPC
@@ -40,7 +37,7 @@ object RequestFlow {
 
             progressTracker.currentStep = GENERATING_TRANSACTION
             //Build transaction
-            val txCommand = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
+            val txCommand = Command(RequestKYCContract.Commands.Request(), ourIdentity.owningKey)
             //The state to be used as output
             val requestState = RequestState(infoOwnerRef, this.ourIdentity,name,false, listOf(infoOwnerRef,ourIdentity))
                      val txBuilder = TransactionBuilder(notary)

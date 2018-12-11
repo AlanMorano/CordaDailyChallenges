@@ -1,10 +1,10 @@
 package com.template.flow
 
 import co.paralleluniverse.fibers.Suspendable
-import com.template.contract.RequestContract
-import com.template.contract.RequestContract.Companion.Request_ID
-import com.template.contract.UserContract
-import com.template.contract.UserContract.Companion.User_ID
+import com.template.contract.RequestKYCContract
+import com.template.contract.RequestKYCContract.Companion.Request_ID
+import com.template.contract.KYCContract
+import com.template.contract.KYCContract.Companion.User_ID
 import com.template.states.RequestState
 import com.template.states.UserState
 import net.corda.core.contracts.Command
@@ -19,7 +19,7 @@ import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
-object SendFlow {
+object SendKYCFlow {
     @InitiatingFlow
     @StartableByRPC
     class Initiator(private val requestor :  Party,
@@ -89,9 +89,9 @@ object SendFlow {
                     ?: throw IllegalArgumentException("No Request state that matches with name $name found.")
 
             println(inputtedRequestAndSendState)
-           val txCommand = Command(UserContract.Commands.SendRequest(), ourIdentity.owningKey)
+           val txCommand = Command(KYCContract.Commands.SendRequest(), ourIdentity.owningKey)
 
-            val txCommand2 = Command(RequestContract.Commands.AcceptRequest(), ourIdentity.owningKey)
+            val txCommand2 = Command(RequestKYCContract.Commands.AcceptRequest(), ourIdentity.owningKey)
 
             val txBuilder = TransactionBuilder(notary)
                     .addInputState(inputtedUserStateAndRef)
