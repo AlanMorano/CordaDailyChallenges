@@ -1,7 +1,7 @@
 package com.template
 
-import com.template.flow.RequestFlow
-import com.template.flow.UserRegisterFlow
+import com.template.flow.KYCRequestFlow
+import com.template.flow.KYCRegisterFlow
 import net.corda.testing.node.MockNetwork
 import net.corda.testing.node.StartedMockNode
 import org.junit.After
@@ -31,9 +31,9 @@ class RequestFlowTest {
     @Test
     @Throws
     fun `NoInputsShouldBeConsumed`(){
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         NodeA.startFlow(flow)
-        val flow2 = RequestFlow.Initiator(NodeA.info.legalIdentities[0].name.organisation,"A")
+        val flow2 = KYCRequestFlow.Initiator(NodeA.info.legalIdentities[0].name.organisation,"A")
         val future = NodeA.startFlow(flow2)
         network.runNetwork()
         val signedTransaction = future.get()
@@ -44,9 +44,9 @@ class RequestFlowTest {
     @Test
     @Throws
     fun `OneOutputShouldBeCreated`(){
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         NodeA.startFlow(flow)
-        val flow2 = RequestFlow.Initiator(NodeA.info.legalIdentities[0].name.organisation,"A")
+        val flow2 = KYCRequestFlow.Initiator(NodeA.info.legalIdentities[0].name.organisation,"A")
         val future = NodeA.startFlow(flow2)
         network.runNetwork()
         val signedTransaction = future.get()

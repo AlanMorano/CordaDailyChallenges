@@ -1,9 +1,9 @@
 package com.template.flow
 
 import co.paralleluniverse.fibers.Suspendable
-import com.template.contract.UserContract
-import com.template.contract.UserContract.Companion.User_ID
-import com.template.states.UserState
+import com.template.contract.KYCContract
+import com.template.contract.KYCContract.Companion.KYC_ID
+import com.template.states.KYCState
 import net.corda.core.contracts.Command
 import net.corda.core.flows.*
 import net.corda.core.flows.InitiatingFlow
@@ -12,7 +12,7 @@ import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
-object UserRegisterFlow {
+object KYCRegisterFlow {
     @InitiatingFlow
     @StartableByRPC
     class Initiator(private val name : String,
@@ -34,11 +34,11 @@ object UserRegisterFlow {
             //Default verified value
             val verification = false
             progressTracker.currentStep = GENERATING_TRANSACTION
-            val userState = UserState(this.ourIdentity,name,age,address,birthday,status,religion,verification, listOf(ourIdentity))
+            val userState = KYCState(this.ourIdentity,name,age,address,birthday,status,religion,verification, listOf(ourIdentity))
 
-            val txCommand = Command(UserContract.Commands.Register(), userState.participants.map { it.owningKey })
+            val txCommand = Command(KYCContract.Commands.Register(), userState.participants.map { it.owningKey })
             val txBuilder = TransactionBuilder(notary)
-                    .addOutputState(userState, User_ID)
+                    .addOutputState(userState, KYC_ID)
                     .addCommand(txCommand)
 
 

@@ -1,9 +1,9 @@
 package com.template.flow
 
 import co.paralleluniverse.fibers.Suspendable
-import com.template.contract.UserContract
-import com.template.contract.UserContract.Companion.User_ID
-import com.template.states.UserState
+import com.template.contract.KYCContract
+import com.template.contract.KYCContract.Companion.KYC_ID
+import com.template.states.KYCState
 import net.corda.core.contracts.Command
 import net.corda.core.flows.FinalityFlow
 import net.corda.core.flows.FlowLogic
@@ -14,7 +14,7 @@ import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
-object UserValidateFlow {
+object KYCValidateFlow {
 
     @InitiatingFlow
     @StartableByRPC
@@ -31,8 +31,8 @@ object UserValidateFlow {
 
             progressTracker.currentStep = GENERATING_TRANSACTION
 
-            //Get all states with type UserState
-            val userStates = serviceHub.vaultService.queryBy<UserState>().states
+            //Get all states with type KYCState
+            val userStates = serviceHub.vaultService.queryBy<KYCState>().states
 
             //Get StateAndRef that matches the data name with the input name
             val inputUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == this.name }
@@ -55,15 +55,15 @@ object UserValidateFlow {
             val isVerified = true
             val list = listOf(ourIdentity)
 
-            val outputState = UserState(node,name,age,address,birthday,status,religion,isVerified,list)//, listOf(ourIdentity)
+            val outputState = KYCState(node,name,age,address,birthday,status,religion,isVerified,list)//, listOf(ourIdentity)
 
             println(outputState)
             val txCommand =
-                    Command(UserContract.Commands.Validate(),ourIdentity.owningKey)
+                    Command(KYCContract.Commands.Validate(),ourIdentity.owningKey)
 
             val txBuilder = TransactionBuilder(notary)
                     .addInputState(inputUserStateAndRef)
-                    .addOutputState(outputState, User_ID)
+                    .addOutputState(outputState, KYC_ID)
                     .addCommand(txCommand)
 
 

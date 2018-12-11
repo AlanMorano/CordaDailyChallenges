@@ -1,7 +1,7 @@
 package com.template
 
 import com.template.flow.KYCRegisterFlow
-import com.template.flow.UserValidateFlow
+import com.template.flow.KYCValidateFlow
 import net.corda.testing.node.MockNetwork
 import net.corda.testing.node.StartedMockNode
 import org.junit.After
@@ -9,7 +9,7 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class UserValidateFlowTest {
+class KYCValidateFlowTest {
 
     private lateinit var network: MockNetwork
     private lateinit var NodeA: StartedMockNode
@@ -34,7 +34,7 @@ class UserValidateFlowTest {
     fun `OneInputShouldBeConsumed`(){
         val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         NodeA.startFlow(flow)
-        val flow2 = UserValidateFlow.Initiator("A")
+        val flow2 = KYCValidateFlow.Initiator("A")
         val future =NodeA.startFlow(flow2)
         network.runNetwork()
         val signedTransaction = future.get()
@@ -46,7 +46,7 @@ class UserValidateFlowTest {
     fun `OneOutputShouldBeCreated`(){
         val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         NodeA.startFlow(flow)
-        val flow2 = UserValidateFlow.Initiator("A")
+        val flow2 = KYCValidateFlow.Initiator("A")
         val future =NodeA.startFlow(flow2)
         network.runNetwork()
         val signedTransaction = future.get()

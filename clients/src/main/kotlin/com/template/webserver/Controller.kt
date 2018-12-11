@@ -1,8 +1,10 @@
 package com.template.webserver
 
-import com.template.states.RequestState
-import com.template.states.UserState
+import com.template.flow.KYCRegisterFlow
+import com.template.states.KYCRequestState
+import com.template.states.KYCState
 import net.corda.core.messaging.vaultQueryBy
+import net.corda.core.utilities.getOrThrow
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -11,8 +13,6 @@ import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import javax.ws.rs.QueryParam
-import javax.ws.rs.core.Response
 
 
 private const val CONTROLLER_NAME = "config.controller.name"
@@ -37,7 +37,7 @@ class Controller(
 
     private val proxy = rpc.proxy
 
-    private fun UserState.toJson(): Map<String, Any>{
+    private fun KYCState.toJson(): Map<String, Any>{
         return mapOf(
                 "node" to node.name.toString(),
                 "name" to name,
@@ -52,7 +52,7 @@ class Controller(
 
         )
     }
-    private fun RequestState.toJson(): Map<String, Any>{
+    private fun KYCRequestState.toJson(): Map<String, Any>{
         return mapOf(
                 "infoOwner" to infoOwner.name.toString(),
                 "requestor" to requestor.name.toString(),
@@ -102,29 +102,29 @@ class Controller(
     }
 
     /**
-     * Return all UserState
+     * Return all KYCState
      */
     @GetMapping(value = "/userstates", produces = arrayOf("application/json"))
     private fun getUserStates(): Map<String, Any>{
-        val userStateAndRefs = rpc.proxy.vaultQueryBy<UserState>().states
+        val userStateAndRefs = rpc.proxy.vaultQueryBy<KYCState>().states
         val userStates = userStateAndRefs.map { it.state.data }
         val list1 = userStates.map { it.toJson() }
         val status = "status" to "success"
-        val message = "message" to "successful in getting ContractState of type UserState"
+        val message = "message" to "successful in getting ContractState of type KYCState"
         return mapOf(status,message, "result" to list1)
     }
 
     /**
-     * Return all RequestState
+     * Return all KYCRequestState
      */
     @GetMapping(value = "/requeststates", produces = arrayOf("application/json"))
     private fun getRequestStates(): Map<String, Any>{
 
-        val requestStateAndRefs = rpc.proxy.vaultQueryBy<RequestState>().states
+        val requestStateAndRefs = rpc.proxy.vaultQueryBy<KYCRequestState>().states
         val requestStates = requestStateAndRefs.map { it.state.data }
         val list1 = requestStates.map { it.toJson() }
         val status = "status" to "success"
-        val message = "message" to "successful in getting ContractState of type UserState"
+        val message = "message" to "successful in getting ContractState of type KYCState"
         return mapOf(status,message,"result" to list1)
     }
 
@@ -160,14 +160,34 @@ class Controller(
     }
 
 
-//    @PostMapping(value = "user", produces = arrayOf("application/json"))
-//    private fun create(
-//            @RequestParam("name") : String,
-//            @RequestParam("age") : Int,
-//            @RequestParam("address") : String,
-//            @RequestParam("birthDate") : String,
-//            @RequestParam("status") : String,
-//            @RequestParam("religion") : String) : ResponseEntity<Map<String, Any>>
+    @PostMapping(value = "/user", produces = arrayOf("application/json"))
+    private fun create(
+            @RequestParam("name") name : String,
+            @RequestParam("age") age : Int,
+            @RequestParam("address") address : String,
+            @RequestParam("birthDate") birthDate: String,
+            @RequestParam("status") status : String,
+            @RequestParam("religion") religion : String) : ResponseEntity<Map<String, Any>>{
+
+        val (status, message) = try {
+            val registerFlow = proxy.startFlowDynamic(
+                    KYCRegisterFlow.Initiator::class.java,
+                    name,
+                    age,
+                    address,
+                    birthDate,
+                    status,
+                    religion
+            )
+            val result = registerFlow.use { it.returnValue.getOrThrow() }
+            HttpStatus.CREATED to "Created new userstate"
+        }catch ( e: Exception) {
+            HttpStatus.BAD_REQUEST to "Failed new create"
+        }
+        return ResponseEntity.status(status).body(mapOf("status" to message))
+    }
+
+
 
 
 

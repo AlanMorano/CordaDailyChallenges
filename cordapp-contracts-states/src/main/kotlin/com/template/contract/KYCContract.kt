@@ -1,14 +1,13 @@
 package com.template.contract
 
-import com.template.states.UserState
+import com.template.states.KYCState
 import net.corda.core.contracts.*
-import net.corda.core.contracts.Requirements.using
 import net.corda.core.transactions.LedgerTransaction
 
-class UserContract : Contract {
+class KYCContract : Contract {
     companion object {
 
-        const val User_ID = "com.template.contract.UserContract"
+        const val KYC_ID = "com.template.contract.KYCContract"
     }
 
     interface Commands : CommandData {
@@ -18,15 +17,15 @@ class UserContract : Contract {
         class SendRequest : TypeOnlyCommandData(), Commands
     }
     override fun verify(tx: LedgerTransaction) {
-        val command = tx.commands.requireSingleCommand<UserContract.Commands>()
+        val command = tx.commands.requireSingleCommand<KYCContract.Commands>()
 
         when(command.value){
 
             is Commands.Register ->   requireThat {
                 "No inputs should be consumed when creating KYC." using (tx.inputs.isEmpty())
                 "Only one output state should be created" using (tx.outputs.size == 1)
-                "Output must be a UserState" using (tx.getOutput(0) is UserState)
-                val outputRegister = tx.outputsOfType<UserState>().single()
+                "Output must be a KYCState" using (tx.getOutput(0) is KYCState)
+                val outputRegister = tx.outputsOfType<KYCState>().single()
                 "Must be signed by the Registering node" using (command.signers.toSet() == outputRegister.participants.map { it.owningKey }.toSet())
                 "Name must not be empty" using (outputRegister.name.isNotEmpty())
                 "Age must not be empty" using (outputRegister.age >=1)
@@ -39,13 +38,13 @@ class UserContract : Contract {
             }
 
             is Commands.Validate -> requireThat {
-                val inputValidate = tx.inputsOfType<UserState>()
-                val outputValidate = tx.outputsOfType<UserState>()
+                val inputValidate = tx.inputsOfType<KYCState>()
+                val outputValidate = tx.outputsOfType<KYCState>()
                 "Only one input should be consumed when validating" using (inputValidate.size == 1)
                 "Only one output should be consumed when validating" using (outputValidate.size == 1)
 
-                "Input must be UserState" using (tx.inputStates[0] is UserState)
-                "Output must be UserState" using (tx.outputStates[0] is UserState)
+                "Input must be KYCState" using (tx.inputStates[0] is KYCState)
+                "Output must be KYCState" using (tx.outputStates[0] is KYCState)
 
                 "Input Verified must be false" using (!inputValidate.single().isVerified)
                 "Output Verified must be true" using (outputValidate.single().isVerified)
@@ -63,22 +62,22 @@ class UserContract : Contract {
             }
 
             is Commands.Update -> requireThat {
-                val inputUpdate = tx.inputsOfType<UserState>()
-                val outputUpdate = tx.outputsOfType<UserState>()
+                val inputUpdate = tx.inputsOfType<KYCState>()
+                val outputUpdate = tx.outputsOfType<KYCState>()
                 "Only one input should be consumed when updating" using (inputUpdate.size == 1)
                 "Only one output should be created when updating" using (outputUpdate.size == 1)
-                "Input must be UserState" using (tx.inputStates[0] is UserState)
-                "Output must be UserState" using (tx.inputStates[0] is UserState)
+                "Input must be KYCState" using (tx.inputStates[0] is KYCState)
+                "Output must be KYCState" using (tx.inputStates[0] is KYCState)
                 "Command must be Update" using (command.value is Commands.Update)
 
 
             }
 
             is Commands.SendRequest -> requireThat {
-                val inputSendReq = tx.inputsOfType<UserState>()
-                val outputSendReq = tx.outRefsOfType<UserState>()
-                "Only one input UserState must be consumed" using (inputSendReq.size == 1)
-                "Only one output UserState must be created" using (outputSendReq.size == 1)
+                val inputSendReq = tx.inputsOfType<KYCState>()
+                val outputSendReq = tx.outRefsOfType<KYCState>()
+                "Only one input KYCState must be consumed" using (inputSendReq.size == 1)
+                "Only one output KYCState must be created" using (outputSendReq.size == 1)
                 "Command must be SendRequest" using (command.value is Commands.SendRequest)
                 val inputSendReqState = inputSendReq.single()
                 val outputSendReqState = inputSendReq.single()

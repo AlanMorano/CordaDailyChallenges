@@ -1,9 +1,7 @@
 package com.template
 
-import com.template.contract.UserContract
-import com.template.flow.RequestFlow
-import com.template.flow.SendFlow
-import com.template.flow.UserRegisterFlow
+import com.template.contract.KYCContract
+import com.template.flow.KYCRegisterFlow
 import net.corda.testing.node.MockNetwork
 import net.corda.testing.node.StartedMockNode
 import org.junit.After
@@ -12,7 +10,7 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class UserRegisterFlowTest {
+class KYCRegisterFlowTest {
 
     private lateinit var network : MockNetwork
     private lateinit var NodeA : StartedMockNode
@@ -34,7 +32,7 @@ class UserRegisterFlowTest {
     @Test
     @Throws(Exception::class)
     fun `NoInputsShouldBeConsumed`(){
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         val future = NodeA.startFlow(flow)
         network.runNetwork()
         val signedTransaction = future.get()
@@ -44,7 +42,7 @@ class UserRegisterFlowTest {
     @Test
     @Throws(Exception::class)
     fun `OneOutputShouldBeCreated`(){
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         val future = NodeA.startFlow(flow)
         network.runNetwork()
         val signedTransaction = future.get()
@@ -54,7 +52,7 @@ class UserRegisterFlowTest {
     @Test
     @Throws(Exception::class)
     fun `transactionConstructedByFlowUsesTheCorrectNotary`() {
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         val future = NodeA.startFlow(flow)
         network.runNetwork()
         val signedTransaction = future.get()
@@ -66,19 +64,19 @@ class UserRegisterFlowTest {
     @Test
     @Throws(Exception::class)
     fun `transactionConstructedByFlowHasOneIssueCommand`() {
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         val future = NodeA.startFlow(flow)
         network.runNetwork()
         val signedTransaction = future.get()
         Assert.assertEquals(1, signedTransaction.tx.commands.size)
         val (value) = signedTransaction.tx.commands[0]
-        assert(value is UserContract.Commands.Register)
+        assert(value is KYCContract.Commands.Register)
     }
 
     @Test
     @Throws(Exception::class)
     fun `RegisterFlowHasOneCommandOwnerIsSigner`() {
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         val future = NodeA.startFlow(flow)
         network.runNetwork()
         val signedTransaction = future.get()

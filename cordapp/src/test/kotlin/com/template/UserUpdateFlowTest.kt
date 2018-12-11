@@ -1,8 +1,8 @@
 package com.template
 
-import com.template.contract.UserContract
-import com.template.flow.UserRegisterFlow
-import com.template.flow.UserUpdateFlow
+import com.template.contract.KYCContract
+import com.template.flow.KYCRegisterFlow
+import com.template.flow.KYCUpdateFlow
 import net.corda.testing.node.MockNetwork
 import net.corda.testing.node.StartedMockNode
 import org.junit.After
@@ -34,9 +34,9 @@ class UserUpdateFlowTest {
     @Test
     @Throws(Exception::class)
     fun `OneInputShouldBeConsumed`(){
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         NodeA.startFlow(flow)
-        val flow2 = UserUpdateFlow.Initiator("A","B",5,"ABC","A2","S","C")
+        val flow2 = KYCUpdateFlow.Initiator("A","B",5,"ABC","A2","S","C")
         val future = NodeA.startFlow(flow2)
         network.runNetwork()
         val signedTransaction = future.get()
@@ -46,9 +46,9 @@ class UserUpdateFlowTest {
     @Test
     @Throws(Exception::class)
     fun `OneOutputShouldBeCreated`(){
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         NodeA.startFlow(flow)
-        val flow2 = UserUpdateFlow.Initiator("A","B",5,"ABC","A2","S","C")
+        val flow2 = KYCUpdateFlow.Initiator("A","B",5,"ABC","A2","S","C")
         val future = NodeA.startFlow(flow2)
         network.runNetwork()
         val signedTransaction = future.get()
@@ -58,14 +58,14 @@ class UserUpdateFlowTest {
     @Test
     @Throws(Exception::class)
     fun `transactionConstructedByFlowHasOneUpdateCommand`() {
-        val flow = UserRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
+        val flow = KYCRegisterFlow.Initiator("A",5,"ABC","A2","S","C")
         NodeA.startFlow(flow)
-        val flow2 = UserUpdateFlow.Initiator("A","B",5,"ABC","A2","S","C")
+        val flow2 = KYCUpdateFlow.Initiator("A","B",5,"ABC","A2","S","C")
         val future = NodeA.startFlow(flow2)
         network.runNetwork()
         val signedTransaction = future.get()
         Assert.assertEquals(1, signedTransaction.tx.commands.size)
         val (value) = signedTransaction.tx.commands[0]
-        assert(value is UserContract.Commands.Update)
+        assert(value is KYCContract.Commands.Update)
     }
 }

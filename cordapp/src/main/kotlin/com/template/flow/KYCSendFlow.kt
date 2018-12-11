@@ -1,12 +1,12 @@
 package com.template.flow
 
 import co.paralleluniverse.fibers.Suspendable
-import com.template.contract.RequestKYCContract
-import com.template.contract.RequestKYCContract.Companion.Request_ID
+import com.template.contract.KYCRequestContract
+import com.template.contract.KYCRequestContract.Companion.Request_ID
 import com.template.contract.KYCContract
-import com.template.contract.KYCContract.Companion.User_ID
-import com.template.states.RequestState
-import com.template.states.UserState
+import com.template.contract.KYCContract.Companion.KYC_ID
+import com.template.states.KYCRequestState
+import com.template.states.KYCState
 import net.corda.core.contracts.Command
 import net.corda.core.flows.FinalityFlow
 import net.corda.core.flows.FlowLogic
@@ -19,7 +19,7 @@ import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
-object SendKYCFlow {
+object KYCSendFlow {
     @InitiatingFlow
     @StartableByRPC
     class Initiator(private val requestor :  Party,
@@ -38,10 +38,10 @@ object SendKYCFlow {
             //Query all unconsumed state
             val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
 
-            //Get all unconsumed states of type UserState
-            val userStates = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states
+            //Get all unconsumed states of type KYCState
+            val userStates = serviceHub.vaultService.queryBy<KYCState>(inputUserCriteria).states
 
-            //Get State And Ref of type UserState that is has a data name that matches with the input name
+            //Get State And Ref of type KYCState that is has a data name that matches with the input name
             val inputtedUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == name }
            ?: throw java.lang.IllegalArgumentException("No User state that matches with name")
 
@@ -70,16 +70,16 @@ object SendKYCFlow {
 
 
 
-            val userState = UserState(this.ourIdentity, name,age,address,birthday,
+            val userState = KYCState(this.ourIdentity, name,age,address,birthday,
                     status,religion,isVerified, listOfParties)
 
             println(inputtedUserStateAndRef)
             println(userState)
 
-            val outputRequestState = RequestState(this.ourIdentity, requestor,name,true, listOf(requestor, ourIdentity))
+            val outputRequestState = KYCRequestState(this.ourIdentity, requestor,name,true, listOf(requestor, ourIdentity))
 
-            //Get all states with type RequestState
-            val requestStates = serviceHub.vaultService.queryBy<RequestState>().states
+            //Get all states with type KYCRequestState
+            val requestStates = serviceHub.vaultService.queryBy<KYCRequestState>().states
 
             //Get requestState that has data name, infoOwner, requestor equals to the inputted data
             val inputtedRequestAndSendState = requestStates.find { stateAndRef ->
@@ -91,12 +91,12 @@ object SendKYCFlow {
             println(inputtedRequestAndSendState)
            val txCommand = Command(KYCContract.Commands.SendRequest(), ourIdentity.owningKey)
 
-            val txCommand2 = Command(RequestKYCContract.Commands.AcceptRequest(), ourIdentity.owningKey)
+            val txCommand2 = Command(KYCRequestContract.Commands.AcceptRequest(), ourIdentity.owningKey)
 
             val txBuilder = TransactionBuilder(notary)
                     .addInputState(inputtedUserStateAndRef)
                     .addInputState(inputtedRequestAndSendState)
-                    .addOutputState(userState, User_ID)
+                    .addOutputState(userState, KYC_ID)
                     .addOutputState(outputRequestState, Request_ID)
                     .addCommand(txCommand2)
                     .addCommand(txCommand)

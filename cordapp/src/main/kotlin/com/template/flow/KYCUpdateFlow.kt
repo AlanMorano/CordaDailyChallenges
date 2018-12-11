@@ -1,9 +1,8 @@
 package com.template.flow
 
 import co.paralleluniverse.fibers.Suspendable
-import com.template.contract.UserContract
-import com.template.contract.UserContract.Companion.User_ID
-import com.template.states.UserState
+import com.template.contract.KYCContract
+import com.template.states.KYCState
 import net.corda.core.contracts.Command
 import net.corda.core.flows.*
 import net.corda.core.flows.InitiatingFlow
@@ -14,7 +13,7 @@ import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
-object UserUpdateFlow {
+object KYCUpdateFlow {
     @InitiatingFlow
     @StartableByRPC
     class Initiator(private val reqName : String,
@@ -40,8 +39,8 @@ object UserUpdateFlow {
             //Query all unconsumed states
             val inputUserCriteria = QueryCriteria.VaultQueryCriteria()
 
-            //Get all state with type UserState with criteria : UNCONSUMED
-            val userStates = serviceHub.vaultService.queryBy<UserState>(inputUserCriteria).states
+            //Get all state with type KYCState with criteria : UNCONSUMED
+            val userStates = serviceHub.vaultService.queryBy<KYCState>(inputUserCriteria).states
 
             //Get StateAndRef that matches the input requested name with the data name of the state
             val inputtedUserStateAndRef = userStates.find { stateAndRef -> stateAndRef.state.data.name == reqName }
@@ -51,11 +50,11 @@ object UserUpdateFlow {
             //Copy the participants of the State to be used as output
             val partiz = inputtedUserStateAndRef.state.data.listOfParties
 
-            val outputUserState = UserState(ourIdentity,name,age,address,birthday,status,religion,inputtedUserStateAndRef.state.data.isVerified, partiz)
-            val txCommand = Command(UserContract.Commands.Update(), ourIdentity.owningKey)
+            val outputUserState = KYCState(ourIdentity,name,age,address,birthday,status,religion,inputtedUserStateAndRef.state.data.isVerified, partiz)
+            val txCommand = Command(KYCContract.Commands.Update(), ourIdentity.owningKey)
             val txBuilder = TransactionBuilder(notary)
                     .addInputState(inputtedUserStateAndRef)
-                    .addOutputState(outputUserState, UserContract.User_ID)
+                    .addOutputState(outputUserState, KYCContract.KYC_ID)
                     .addCommand(txCommand)
 
 
