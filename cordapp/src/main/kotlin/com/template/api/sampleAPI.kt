@@ -1,8 +1,12 @@
 package com.template.api
 
 
+import com.template.states.UserState
+import net.corda.core.contracts.ContractState
+import net.corda.core.contracts.StateAndRef
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.messaging.CordaRPCOps
+import net.corda.core.messaging.vaultQueryBy
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 
@@ -33,6 +37,20 @@ class sampleAPI (private val corp: CordaRPCOps){
                 .map { it.legalIdentities.first().name}
                 .filter{ it !in listOf(legalName,SERVICES_NAME,NodeA )})
     }
+
+    @GET
+    @Path("users")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getTokens(): List<StateAndRef<ContractState>>{
+        return corp.vaultQueryBy<UserState>().states
+    }
+
+
+
+
+
+
+
 
 
 
