@@ -1,5 +1,6 @@
 package com.template.webserver
 
+import com.template.AccountState
 import com.template.RegisterFlow
 import com.template.UpdateFlow
 import com.template.UserState
@@ -9,17 +10,15 @@ import net.corda.core.identity.CordaX500Name
 import net.corda.core.messaging.vaultQueryBy
 import net.corda.core.utilities.getOrThrow
 import net.corda.core.utilities.loggerFor
-import org.apache.qpid.proton.amqp.messaging.Accepted
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime
 import java.time.ZoneId
 import javax.ws.rs.QueryParam
-import javax.ws.rs.core.Response
+
+
 
 
 /**
@@ -47,7 +46,7 @@ class Controller(
                 "birthdate" to BirthDate,
                 "status" to Status,
                 "religion" to Religion,
-                "linead Id" to linearId,
+                "linear Id" to linearId,
                 "list parties" to parties.toString(),
                 "notary" to notaries(),
                 "txhash" to hashCode(),
@@ -127,90 +126,48 @@ class Controller(
         })
     }
 
-//    @PostMapping(value = "/login")
-//    private fun Authentication(
-//            @QueryParam("username") username: String,
-//            @QueryParam("password") password: String): Response
-//    {
-//        if (username == "user1" && password == "test") {
-//            //Grant access
-//            return Response.status(Response.Status.ACCEPTED).entity("$username sucessfully logged in").build()
-//        } else {
-//            return Response.status(Response.Status.OK).entity("Invalid username or password").build()
-//        }
-//    }
-
-    @PostMapping(value = "/login",produces = arrayOf("text/plain"))
+    @PostMapping(value = "/login",produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     private fun Authentication(
             @QueryParam("username") username: String,
-            @QueryParam("password") password: String): ResponseEntity<String> {
-        if (username == "user1" && password == "test") {
+            @QueryParam("password") password: String): ResponseEntity<Map<String, Any>> {
+
+            val flowHandle = rpc.proxy.vaultQueryBy<AccountState>().states
+            val flowhandle = rpc.proxy.vaultQueryBy<UserState>().states
+            val userStates = flowHandle.map { it.state.data.UserName }
+            val passStates = flowHandle.map { it.state.data.PassWord }
+        if (username == "${userStates.first()}"  && password == "${passStates.first()}") {
+
             //Grant access
-            return ResponseEntity.ok("successful $username")
+            return ResponseEntity.ok().body(mapOf("status" to "success", "message" to "Successful Log-in",
+                    "result" to ""))
         } else {
-            return ResponseEntity.badRequest().body("invalid $username")
+            return ResponseEntity.badRequest().body(mapOf(username to "$userStates", password to "$passStates",
+                    "result" to "[]"))
         }
     }
 
-//    @PostMapping(value = "/register")
-//    private fun register(@QueryParam("Name") Name: String,
-//                         @QueryParam("Age") Age: Int,
-//                         @QueryParam("Address") Address: String,
-//                         @QueryParam("BirthDate") BirthDate: String,
-//                         @QueryParam("Status") Status: String,
-//                         @QueryParam("Religion") Religion: String
-//    ): Response {
-//
-//        return try {
-//            val flowHandle = rpc.proxy.startFlowDynamic(RegisterFlow::class.java,
-//                    Name,Age,Address,BirthDate,Status,Religion)
-//            val result =flowHandle.returnValue.getOrThrow()
-//            Response.status(Response.Status.CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
-//        } catch (ex: Throwable) {
-//            Response.status(Response.Status.BAD_REQUEST).entity(ex.message!!).build()
-//        }
-//    }
-
-    @PostMapping(value = "/register")
+    @PostMapping(value = "/register", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     private fun register(@QueryParam("Name") Name: String,
                          @QueryParam("Age") Age: Int,
                          @QueryParam("Address") Address: String,
                          @QueryParam("BirthDate") BirthDate: String,
                          @QueryParam("Status") Status: String,
                          @QueryParam("Religion") Religion: String
-    ): ResponseEntity<String> {
+    ): ResponseEntity<Map<String, Any>> {
 
-        return try {
+        val (status,message) = try {
             val flowHandle = rpc.proxy.startFlowDynamic(RegisterFlow::class.java,
                     Name,Age,Address,BirthDate,Status,Religion)
-            val result = flowHandle.returnValue.getOrThrow()
-            ResponseEntity.ok("Registered ${result.id}")
-        } catch (ex: Throwable) {
-            ResponseEntity.badRequest().body("Invalid Input ${ex.message}")
+            val result = flowHandle.use { it.returnValue.getOrThrow()}
+            val flowresult = mapOf("Name" to "$Name","Age" to "$Age", "Address" to "$Address", "BirthDate" to "$BirthDate",
+                    "Status" to "$Status", "Religion" to "$Religion")
+            HttpStatus.CREATED to "${flowresult}Transaction id ${result.id} committed to ledger"
+        } catch (ex: Exception) {
+            HttpStatus.BAD_REQUEST to ex.message
         }
+        return ResponseEntity.status(status).body(mapOf("status" to "success", "message" to "Successful Registered",
+                "result" to "$message"))
     }
-
-//    @PostMapping(value = "/update")
-//    private fun updateKYC(
-//                          @QueryParam("NewName") NewName: String,
-//                          @QueryParam("NewAge") NewAge: Int,
-//                          @QueryParam("NewAddress") NewAddress: String,
-//                          @QueryParam("NewBirthDate") NewBirthDate: String,
-//                          @QueryParam("NewStatus") NewStatus: String,
-//                          @QueryParam("NewReligion") NewReligion: String,
-//                          @QueryParam("Id")ID: String
-//    ): Response {
-//
-//        return try {
-//            val uniqueID = UniqueIdentifier.fromString(ID)
-//            val flowHandle = rpcOps.startFlowDynamic(UpdateFlow::class.java,
-//                    NewName, NewAge, NewAddress, NewBirthDate, NewStatus, NewReligion,uniqueID)
-//            val result = flowHandle.returnValue.getOrThrow()
-//            Response.status(Response.Status.CREATED).entity("Transaction id ${result.id} committed to ledger.\n").build()
-//        } catch (ex: Throwable) {
-//            Response.status(Response.Status.BAD_REQUEST).entity(ex.message!!).build()
-//        }
-//    }
 
     @PostMapping(value = "/update")
     private fun updateKYC(
@@ -221,17 +178,18 @@ class Controller(
             @QueryParam("NewStatus") NewStatus: String,
             @QueryParam("NewReligion") NewReligion: String,
             @QueryParam("Id")ID: String
-    ): ResponseEntity<String> {
+    ): ResponseEntity<Map<String, Any>> {
 
-        return try {
+        val (status , message) = try {
             val uniqueID = UniqueIdentifier.fromString(ID)
             val flowHandle = rpcOps.startFlowDynamic(UpdateFlow::class.java,
                     NewName, NewAge, NewAddress, NewBirthDate, NewStatus, NewReligion,uniqueID)
-            val result = flowHandle.returnValue.getOrThrow()
-            ResponseEntity.ok("Updated $ID , $NewName, ${result.id}")
+            val result = flowHandle.use { it.returnValue.getOrThrow()}
+            HttpStatus.CREATED to "Updated $ID , $NewName, ${result.id}"
         } catch (ex: Throwable) {
-            ResponseEntity.badRequest().body("invalid ${ex.message}")
+            HttpStatus.BAD_REQUEST to ex.message
         }
+        return ResponseEntity.status(status).body(mapOf("status" to "$message"))
     }
 
     @GetMapping(value = "/teers", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
