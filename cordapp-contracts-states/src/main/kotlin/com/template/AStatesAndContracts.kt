@@ -31,18 +31,17 @@ class AccountContract : Contract {
     }
 
 }
-
 // *********
 // * State *
 // *********
 data class AccountState (val Node: Party,
-                         val UserName: String,
-                         val PassWord: String,
-                      val FirstName: String,
-                      val LastName: String,
-                      val Email: String,
-                      val Number: Int,
-                      val parties: List<Party>,
+                         val Username: String,
+                         val Password: String,
+                         val Firstname: String,
+                         val Lastname: String,
+                         val Email: String,
+                         val Number: Int,
+                         val parties: List<Party>,
                       override val linearId : UniqueIdentifier = UniqueIdentifier()): LinearState {//, QueryableState{
 //participants are all the list of the parties give its information
 override val participants = parties}
