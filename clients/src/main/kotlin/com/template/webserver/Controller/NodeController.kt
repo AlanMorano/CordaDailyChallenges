@@ -1,4 +1,4 @@
-package com.template.webserver
+package com.template.webserver.Controller
 
 import com.template.flow.KYCRegisterFlow
 import com.template.flow.KYCRequestFlow
@@ -6,6 +6,7 @@ import com.template.flow.UserAccountRegisterFlow
 import com.template.states.KYCRequestState
 import com.template.states.KYCState
 import com.template.states.UserAccountState
+import com.template.webserver.NodeRPCConnection
 import net.corda.core.messaging.vaultQueryBy
 import net.corda.core.utilities.getOrThrow
 import org.slf4j.LoggerFactory

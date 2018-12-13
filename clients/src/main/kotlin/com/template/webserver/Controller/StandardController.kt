@@ -1,6 +1,6 @@
-package com.template.webserver
+package com.template.webserver.Controller
 
-import org.springframework.beans.factory.annotation.Value
+import com.template.webserver.NodeRPCConnection
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
