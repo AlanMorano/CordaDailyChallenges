@@ -2,12 +2,10 @@ package com.template.webserver
 
 import com.template.flows.RegisterFlow
 import com.template.flows.RequestFlow
+import com.template.flows.UpdateFlow
 import com.template.states.RequestState
 import com.template.states.UserState
-import net.corda.core.contracts.ContractState
-import net.corda.core.contracts.StateAndRef
-import net.corda.core.contracts.TransactionVerificationException
-import net.corda.core.contracts.hash
+import net.corda.core.contracts.*
 import net.corda.core.identity.CordaX500Name
 import net.corda.core.identity.Party
 import net.corda.core.identity.excludeNotary
@@ -184,44 +182,17 @@ private const val CONTROLLER_NAME = "config.controller.name"
 
 
 
-//    @PostMapping(value = "/register", produces = arrayOf("application/json"))
-//    private fun register(@RequestParam("name") name: String,
-//                         @RequestParam("age") age: Int,
-//                         @RequestParam("address") address: String,
-//                         @RequestParam("birthDate") birthDate: String,
-//                         @RequestParam("status") status: String,
-//                         @RequestParam("religion") religion: String
-//
-//    ):ResponseEntity<Map<String, Any>> {
-//
-//        val (Status,message) = try {
-//            val flowHandle = rpc.proxy.startFlowDynamic(RegisterFlow::class.java,
-//                    name,
-//                    age,
-//                    address,
-//                    birthDate,
-//                    status,
-//                    religion)
-//            val result = flowHandle.use { it.returnValue.getOrThrow()}
-//            HttpStatus.CREATED to "Registered Transaction id  committed to ledger."
-//                 } catch (ex: Exception) {
-//            HttpStatus.BAD_REQUEST to "Invalid input"
-//        }
-//        return ResponseEntity.status(Status).body(mapOf("status" to message))
-//    }
-
     @PostMapping(value = "/register", produces = arrayOf("application/json"))
     private fun createKYC(
-            @RequestParam("name") name : String,
-            @RequestParam("age") age : Int,
-            @RequestParam("address") address : String,
-            @RequestParam("birthDate") birthDate: String,
-            @RequestParam("status") status : String,
-            @RequestParam("religion") religion : String) : ResponseEntity<Map<String, Any>> {
+            @RequestParam("name")name : String,
+            @RequestParam("age")age : Int,
+            @RequestParam("address")address : String,
+            @RequestParam("birthDate")birthDate: String,
+            @RequestParam("status")status : String,
+            @RequestParam("religion")religion : String) : ResponseEntity<Map<String, Any>> {
 
         val (status, message) = try {
-            val registerFlow = proxy.startFlowDynamic(
-                    RegisterFlow::class.java,
+            val registerFlow = proxy.startFlowDynamic(RegisterFlow::class.java,
                     name,
                     age,
                     address,
@@ -229,13 +200,58 @@ private const val CONTROLLER_NAME = "config.controller.name"
                     status,
                     religion
             )
+            val data = mapOf( "name" to "$name",
+                                                "age" to "$age",
+                                                "address" to "$address",
+                                                "birthDate" to "$birthDate",
+                                                "status" to "$status",
+                                                "religion" to "$religion")
             val result = registerFlow.use { it.returnValue.getOrThrow() }
-            HttpStatus.CREATED to "Created new KYC state"
-        }catch ( e: Exception) {
-            HttpStatus.BAD_REQUEST to "Failed new create"
+            HttpStatus.CREATED to data
+        }catch ( ex: Exception) {
+            HttpStatus.BAD_REQUEST to "Failed to Register"
         }
-        return ResponseEntity.status(status).body(mapOf("status" to message))
+        return ResponseEntity.status(status).body(mapOf("status" to "Successfully Registered!!!", "data inserted" to message))
     }
+
+
+
+    @PutMapping(value = "/update",produces = arrayOf("application/json"))
+    private fun getUpdate(@RequestParam("Id")Id : UniqueIdentifier,
+                          @RequestParam("name")name : String,
+                          @RequestParam("age")age : Int,
+                          @RequestParam("address")address : String,
+                          @RequestParam("birthDate")birthDate: String,
+                          @RequestParam("status")status : String,
+                          @RequestParam("religion")religion : String
+                          ):ResponseEntity<Map<String, Any>>{ val (status, message) = try {
+        val registerFlow = proxy.startFlowDynamic(UpdateFlow::class.java,
+                Id,
+                name,
+                age,
+                address,
+                birthDate,
+                status,
+                religion
+        )
+        val data = mapOf(
+                "name" to "$name",
+                "age" to "$age",
+                "address" to "$address",
+                "birthDate" to "$birthDate",
+                "status" to "$status",
+                "religion" to "$religion")
+        val result = registerFlow.use { it.returnValue.getOrThrow() }
+        HttpStatus.CREATED to data
+    }catch ( ex: Exception) {
+        HttpStatus.BAD_REQUEST to "Failed to Updated"
+    }
+        return ResponseEntity.status(status).body(mapOf("status" to "Successfully Updated!!!", "data updated" to message))
+
+    }
+
+
+
 
 
 //        @PostMapping(value = "/login", produces = arrayOf("application/json"))

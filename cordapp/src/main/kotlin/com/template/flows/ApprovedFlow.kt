@@ -20,7 +20,7 @@ import net.corda.core.utilities.ProgressTracker
 
 @InitiatingFlow
 @StartableByRPC
-class ApprovedFlow(private  val Id: UniqueIdentifier) : FlowLogic<Unit>(){
+class ApprovedFlow(private  val Id: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
 
 
@@ -46,7 +46,7 @@ class ApprovedFlow(private  val Id: UniqueIdentifier) : FlowLogic<Unit>(){
     override  val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call():SignedTransaction {
         /* Step 1 - Build the transaction */
         val inputRequestCriteria = QueryCriteria.VaultQueryCriteria()
         val inputRequestStateAndRef = serviceHub.vaultService.queryBy<RequestState>(inputRequestCriteria).states
@@ -106,7 +106,7 @@ class ApprovedFlow(private  val Id: UniqueIdentifier) : FlowLogic<Unit>(){
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-         subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
 
     }
 }

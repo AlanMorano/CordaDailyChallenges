@@ -26,7 +26,7 @@ class UpdateFlow( private val Id: UniqueIdentifier,
                   private val address: String,
                   private val birthDate: String,
                   private val status: String,
-                  private val religion: String): FlowLogic<Unit>(){
+                  private val religion: String): FlowLogic<SignedTransaction>(){
 
     /* Declare Transaction steps*/
 
@@ -50,7 +50,7 @@ class UpdateFlow( private val Id: UniqueIdentifier,
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call():SignedTransaction {
 
         /* Step 1 - Build the transaction */
         val inputCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(Id))
@@ -83,7 +83,7 @@ class UpdateFlow( private val Id: UniqueIdentifier,
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-         subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
 
 
 

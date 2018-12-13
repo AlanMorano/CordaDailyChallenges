@@ -14,13 +14,13 @@ import net.corda.core.utilities.ProgressTracker
 @InitiatingFlow
 @StartableByRPC
 class RegisterFlow(
-        private val ownParty: Party,
+
         private val name: String,
         private val age: Int,
         private val address: String,
         private val birthDate: String,
         private val status: String,
-        private val religion: String): FlowLogic<Unit>(){
+        private val religion: String): FlowLogic<SignedTransaction>(){
 
     /* Declare Transaction steps*/
 
@@ -43,11 +43,11 @@ class RegisterFlow(
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call(){
+    override fun call():SignedTransaction{
         /* Step 1 - Build the transaction */
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
-        val userState =UserState(ownParty,name,age,address,birthDate,status,religion,false, listOf(ourIdentity), UniqueIdentifier())
-        val cmd = Command(UserContract.Commands.Register(),ownParty.owningKey)
+        val userState =UserState(ourIdentity,name,age,address,birthDate,status,religion,false, listOf(ourIdentity), UniqueIdentifier())
+        val cmd = Command(UserContract.Commands.Register(),ourIdentity.owningKey)
 
 
         val txBuilder = TransactionBuilder(notary)
@@ -68,7 +68,7 @@ class RegisterFlow(
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-     subFlow(FinalityFlow(signedTx))
+     return subFlow(FinalityFlow(signedTx))
 
     }
 

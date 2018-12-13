@@ -12,13 +12,14 @@ import net.corda.core.flows.StartableByRPC
 import net.corda.core.identity.Party
 import net.corda.core.node.services.queryBy
 import net.corda.core.node.services.vault.QueryCriteria
+import net.corda.core.transactions.SignedTransaction
 import net.corda.core.transactions.TransactionBuilder
 import net.corda.core.utilities.ProgressTracker
 
 @InitiatingFlow
 @StartableByRPC
 class RemoveFlow(private val RemoveParty: Party,
-                 private val Id: UniqueIdentifier) : FlowLogic<Unit>() {
+                 private val Id: UniqueIdentifier) : FlowLogic<SignedTransaction>() {
 
     /* Declare Transaction Steps */
     companion object {
@@ -40,7 +41,7 @@ class RemoveFlow(private val RemoveParty: Party,
     override val progressTracker = tracker()
 
     @Suspendable
-    override fun call() {
+    override fun call():SignedTransaction {
 
         /* Step 1 - Build the transaction */
 
@@ -88,6 +89,6 @@ class RemoveFlow(private val RemoveParty: Party,
         /* Step 4 and 5 - Notarize then Record the transaction */
         progressTracker.currentStep = NOTARIZE_TRANSACTION
         progressTracker.currentStep = RECORD_TRANSACTION
-        subFlow(FinalityFlow(signedTx))
+        return subFlow(FinalityFlow(signedTx))
     }
 }
