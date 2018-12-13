@@ -44,9 +44,5 @@ class StandardController(
             return mapOf("date" to date, "time" to time)
 
 
-
-
-
-
 }
 }
