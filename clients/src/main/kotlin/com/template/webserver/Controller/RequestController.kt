@@ -78,7 +78,7 @@ class RequestController(
             val infoOwnerIdentity = proxy.partiesFromName(request.infoOwner, exactMatch = false).singleOrNull()
                     ?: throw IllegalStateException("No ${request.infoOwner} in the network map.")
 
-            val registerFlow = proxy.startFlowDynamic(
+           proxy.startFlowDynamic(
                     KYCRequestFlow.Initiator::class.java,
                     infoOwnerIdentity.name.organisation,
                     request.name

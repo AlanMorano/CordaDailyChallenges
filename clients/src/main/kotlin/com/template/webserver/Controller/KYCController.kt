@@ -83,7 +83,7 @@ class KYCController(
                     religion = createKYC.religion
             )
 
-            val registerFlow = proxy.startFlowDynamic(
+             proxy.startFlowDynamic(
                     KYCRegisterFlow.Initiator::class.java,
                     kyc.name,
                     kyc.age,
@@ -111,7 +111,7 @@ class KYCController(
         }catch (e: Exception){
             HttpStatus.BAD_REQUEST to "No data"
         }
-        val stat = "status" to status
+        val stat = "status" to status.value()
         val mess = if (status==HttpStatus.CREATED){
             "message" to "Successful in creating ContractState of type KYCState"}
         else{ "message" to "Failed to create ContractState of type KYCState"}
@@ -119,5 +119,10 @@ class KYCController(
         return ResponseEntity.status(status).body(mapOf(stat,mess,res))
 
     }
+
+    /**
+     * KYC UPDATE
+     */
+
 
 }

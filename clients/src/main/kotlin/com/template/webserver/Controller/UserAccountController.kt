@@ -81,7 +81,7 @@ class UserAccountController(
                     email = createUserAccount.email,
                     role = createUserAccount.role
             )
-            val registerFlow = proxy.startFlowDynamic(
+          proxy.startFlowDynamic(
                     UserAccountRegisterFlow.Initiator::class.java,
                     user.firstName,
                     user.middleName,
@@ -91,7 +91,7 @@ class UserAccountController(
                     user.email,
                     user.role
             )
-            val out = registerFlow.use { it.returnValue.getOrThrow() }
+//            val out = registerFlow.use { it.returnValue.getOrThrow() }
             val userStateRef = proxy.vaultQueryBy<UserAccountState>().states.last()
             val userStateData = userStateRef.state.data
             val list = userAccountModel(
