@@ -14,7 +14,9 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import com.template.flow.Encryption.md5
+import com.template.models.*
 import net.corda.core.contracts.StateAndRef
+import javax.servlet.http.HttpServletRequest
 
 
 private const val CONTROLLER_NAME = "config.controller.name"
@@ -30,18 +32,22 @@ class Controller(
     private val proxy = rpc.proxy
 
 
-    private fun KYCState.toJson(): Map<String, Any>{
-        return mapOf(
-                "node" to node.name.toString(), "name" to name, "age" to age, "address" to address, "birthDate" to birthDate, "status" to status, "religion" to religion,
-                "isVerified" to isVerified, "listOfParties" to listOfParties.toString(), "linearId" to linearId.toString()) }
     private fun KYCRequestState.toJson(): Map<String, Any>{
         return mapOf(
-                "infoOwner" to infoOwner.name.toString(), "requestor" to requestor.name.toString(), "name" to name,
-                "listOfParties" to listOfParties.toString(), "linearId" to linearId.toString()) }
+                "infoOwner" to infoOwner.name.toString(),
+                "requestor" to requestor.name.toString(),
+                "name" to name,
+                "listOfParties" to listOfParties.toString(),
+                "linearId" to linearId.toString()) }
     private fun UserAccountState.toJson(): Map<String, Any>{
         return mapOf(
-                "firstName" to firstName, "middleName" to middleName, "lastName" to lastName, "username" to username, "password" to password,
-                "email" to email, "role" to role) }
+                "firstName" to firstName,
+                "middleName" to middleName,
+                "lastName" to lastName,
+                "username" to username,
+                "password" to password,
+                "email" to email,
+                "role" to role) }
 
     /**
      *Login
@@ -94,47 +100,103 @@ class Controller(
         return ResponseEntity.status(status).body(mess)
     }
 
-
-
     /**
      * Return all KYCState
      */
+
     @GetMapping(value = "/states/kyc", produces = arrayOf("application/json"))
-    private fun getKYCStates(): Map<String, Any>{
-        val userStateAndRefs = rpc.proxy.vaultQueryBy<KYCState>().states
-        val userStates = userStateAndRefs.map { it.state.data }
-        val list1 = userStates.map { it.toJson() }
-        val status = "status" to "success"
-        val message = "message" to "successful in getting ContractState of type KYCState"
-        return mapOf(status,message, "result" to list1)
+            private fun getKYCStates() : ResponseEntity<Map<String,Any>>{
+        val (status, result ) = try {
+            val kycStateRef = rpc.proxy.vaultQueryBy<KYCState>().states
+            val kycStates = kycStateRef.map { it.state.data }
+            val list = kycStates.map {
+                kycModel(
+                        node = it.node.name.toString(),
+                        name = it.name,
+                        age = it.age,
+                        address = it.address,
+                        birthday = it.birthDate,
+                        status = it.status,
+                        religion = it.religion,
+                        isVerified = it.isVerified,
+                        listOfParties = it.listOfParties.toString(),
+                        linearId = it.linearId.toString())
+            }
+            HttpStatus.CREATED to list
+        }catch( e: Exception){
+            HttpStatus.BAD_REQUEST to "No data"
+        }
+        val stat = "status" to status
+        val mess = if (status==HttpStatus.CREATED){
+          "message" to "Successful in getting ContractState of type KYCState"}
+        else{ "message" to "Failed to get ContractState of type KYCState"}
+        val res = "result" to result
+        return ResponseEntity.status(status).body(mapOf(stat,mess,res))
+
+
     }
 
     /**
      * Return all KYCRequestState
      */
-    @GetMapping(value = "/states/request", produces = arrayOf("application/json"))
-    private fun getRequestStates(): Map<String, Any>{
 
-        val requestStateAndRefs = rpc.proxy.vaultQueryBy<KYCRequestState>().states
-        val requestStates = requestStateAndRefs.map { it.state.data }
-        val list1 = requestStates.map { it.toJson() }
-        val status = "status" to "success"
-        val message = "message" to "successful in getting ContractState of type KYCRequestState"
-        return mapOf(status,message,"result" to list1)
+    @GetMapping(value = "/states/request", produces = arrayOf("application/json"))
+    private fun getRequestStates() : ResponseEntity<Map<String,Any>>{
+        val (status, result ) = try {
+            val requestStateRef = rpc.proxy.vaultQueryBy<KYCRequestState>().states
+            val requestStates = requestStateRef.map { it.state.data }
+            val list = requestStates.map {
+              requestModel(
+                      infoOwner = it.infoOwner.name.toString(),
+                      requestor = it.requestor.toString(),
+                      name = it.name,
+                      listOfParties = it.listOfParties.toString(),
+                      linearId = it.linearId.toString()
+              )
+            }
+            HttpStatus.CREATED to list
+        }catch( e: Exception){
+            HttpStatus.BAD_REQUEST to "No data"
+        }
+        val stat = "status" to status
+        val mess = if (status==HttpStatus.CREATED){
+            "message" to "Successful in getting ContractState of type KYCRequestState"}
+        else{ "message" to "Failed to get ContractState of type KYCRequestState"}
+        val res = "result" to result
+        return ResponseEntity.status(status).body(mapOf(stat,mess,res))
+
     }
+
 
     /**
      * Return all UserAccountState
      */
     @GetMapping(value = "/states/user", produces = arrayOf("application/json"))
-    private fun getUserStates(): Map<String, Any>{
-
-        val userStateAndRefs = rpc.proxy.vaultQueryBy<UserAccountState>().states
-        val userStates = userStateAndRefs.map { it.state.data }
-        val list1 = userStates.map { it.toJson() }
-        val status = "status" to "success"
-        val message = "message" to "successful in getting ContractState of type UserContractState"
-        return mapOf(status,message,"result" to list1)
+    private fun getUserAccountStates() : ResponseEntity<Map<String,Any>>{
+        val (status, result ) = try {
+            val requestStateRef = rpc.proxy.vaultQueryBy<UserAccountState>().states
+            val requestStates = requestStateRef.map { it.state.data }
+            val list = requestStates.map {
+                userAccountModel(
+                        firstName = it.firstName,
+                        middleName = it.middleName,
+                        lastName = it.lastName,
+                        username = it.username,
+                        password = it.password,
+                        email = it.email,
+                        role = it.role
+                )
+            }
+            HttpStatus.CREATED to list
+        }catch( e: Exception){
+            HttpStatus.BAD_REQUEST to "No data"
+        }
+        val stat = "status" to status
+        val mess = if (status==HttpStatus.CREATED){
+            "message" to "Successful in getting ContractState of type UserAccountState"}
+        else{ "message" to "Failed to get ContractState of type UserAccountState"}
+        val res = "result" to result
+        return ResponseEntity.status(status).body(mapOf(stat,mess,res))
     }
 
 
@@ -144,27 +206,53 @@ class Controller(
      */
 
     @PostMapping(value = "/states/kyc/create", produces = arrayOf("application/json"))
-    private fun createKYC(
-            @RequestParam("name") name : String,
-            @RequestParam("age") age : Int,
-            @RequestParam("address") address : String,
-            @RequestParam("birthDate") birthDate: String,
-            @RequestParam("status") status : String,
-            @RequestParam("religion") religion : String) : ResponseEntity<Map<String, Any>>{
+    private fun createKYC(@RequestBody createKYC: createKYC) : ResponseEntity<Map<String,Any>> {
 
-        val (status, message) = try {
+        val (status, result) = try {
+            val kyc = createKYC(
+                        name = createKYC.name,
+                        age = createKYC.age,
+                        address = createKYC.address,
+                        birthday = createKYC.birthday,
+                        status = createKYC.status,
+                        religion = createKYC.religion
+            )
+
             val registerFlow = proxy.startFlowDynamic(
                     KYCRegisterFlow.Initiator::class.java,
-                    name, age, address, birthDate, status, religion)
-            val result = registerFlow.use { it.returnValue.getOrThrow() }
-            HttpStatus.CREATED to "Created new KYCState"
-        }catch ( e: Exception) {
-            HttpStatus.BAD_REQUEST to "Failed to create new KYCState" }
-        val kycStateRef = proxy.vaultQueryBy<KYCState>().states.last()
-        val kycState = kycStateRef.state.data.toJson()
-        val mess = mapOf("status" to status,
-                "message" to message, "result" to kycState)
-        return ResponseEntity.status(status).body(mess)
+                    kyc.name,
+                    kyc.age,
+                    kyc.address,
+                    kyc.birthday,
+                    kyc.status,
+                    kyc.religion
+            )
+            val out = registerFlow.use { it.returnValue.getOrThrow() }
+            val kycStateRef = proxy.vaultQueryBy<KYCState>().states.last()
+            val kycStateData = kycStateRef.state.data
+            val list = kycModel(
+                    node = kycStateData.node.name.toString(),
+                    name = kycStateData.name,
+                    age = kycStateData.age,
+                    address = kycStateData.address,
+                    birthday = kycStateData.birthDate,
+                    status = kycStateData.status,
+                    religion = kycStateData.religion,
+                    isVerified = kycStateData.isVerified,
+                    listOfParties = kycStateData.listOfParties.toString(),
+                    linearId = kycStateData.linearId.toString()
+            )
+            HttpStatus.CREATED to list
+        }catch (e: Exception){
+            HttpStatus.BAD_REQUEST to "No data"
+        }
+        val stat = "status" to status
+        val mess = if (status==HttpStatus.CREATED){
+            "message" to "Successful in creating ContractState of type KYCState"}
+        else{ "message" to "Failed to create ContractState of type KYCState"}
+        val res = "result" to result
+        return ResponseEntity.status(status).body(mapOf(stat,mess,res))
+
     }
 
     /**
@@ -172,62 +260,94 @@ class Controller(
      */
 
     @PostMapping(value = "/states/request/create", produces = arrayOf("application/json"))
-    private fun createKYCRequest(
-            @RequestParam("infoOwner") infoOwner : String,
-            @RequestParam("name") name : String) : ResponseEntity<Map<String, Any>>{
+    private fun createRequset(@RequestBody createRequest: createRequest) : ResponseEntity<Map<String,Any>> {
 
-        val infoOwnerIdentity = proxy.partiesFromName(infoOwner, exactMatch = false).singleOrNull()
-                ?: throw IllegalStateException("No $infoOwner in the network map.")
+        val (status, result) = try {
+            val request = createRequest(
+                    infoOwner = createRequest.infoOwner,
+                    name = createRequest.name
+            )
+           val infoOwnerIdentity = proxy.partiesFromName(request.infoOwner, exactMatch = false).singleOrNull()
+              ?: throw IllegalStateException("No ${request.infoOwner} in the network map.")
 
-        val (status, message) = try {
             val registerFlow = proxy.startFlowDynamic(
-                    KYCRequestFlow.Initiator::class.java, infoOwnerIdentity.toString(), name)
-
-            val result = registerFlow.use { it.returnValue.getOrThrow() }
-            HttpStatus.CREATED to "Created new KYC RequestState"
-        }catch ( e: Exception) {
-            HttpStatus.BAD_REQUEST to "Failed to create new KYC RequestState"
+                    KYCRequestFlow.Initiator::class.java,
+                   infoOwnerIdentity.name.organisation,
+                    request.name
+            )
+            val out = registerFlow.use { it.returnValue.getOrThrow() }
+            val requestStateRef = proxy.vaultQueryBy<KYCRequestState>().states.last()
+            val requestStateData = requestStateRef.state.data
+            val list = requestModel(
+                    infoOwner = requestStateData.infoOwner.toString(),
+                    requestor = requestStateData.requestor.toString(),
+                    name = requestStateData.name,
+                    listOfParties = requestStateData.listOfParties.toString(),
+                    linearId = requestStateData.linearId.toString()
+            )
+            HttpStatus.CREATED to list
+        }catch (e: Exception){
+            HttpStatus.BAD_REQUEST to "No data"
         }
-        val requestStateRef = proxy.vaultQueryBy<KYCRequestState>().states.last()
-        val requestState = requestStateRef.state.data.toJson()
-        val mess : Any
-        mess = if(status==HttpStatus.CREATED) {
-            mapOf("status" to status, "message" to message, "result" to requestState)
-        } else mapOf("status" to status, "message" to message, "result" to "No data")
+        val stat = "status" to status
+        val mess = if (status==HttpStatus.CREATED){
+            "message" to "Successful in creating ContractState of type KYCRequestState"}
+        else{ "message" to "Failed to create ContractState of type KYCRequestState"}
+        val res = "result" to result
+        return ResponseEntity.status(status).body(mapOf(stat,mess,res))
 
-        return ResponseEntity.status(status).body(mess)
     }
 
     /**
      * REGISTER - UserAccountRegisterFlow
      */
+
     @PostMapping(value = "/states/user/create", produces = arrayOf("application/json"))
-    private fun createUser(
-            @RequestParam("firstName") firstName : String,
-            @RequestParam("middleName") middleName : String,
-            @RequestParam("lastName") lastName : String,
-            @RequestParam("username") username: String,
-            @RequestParam("password") password : String,
-            @RequestParam("email") email : String,
-            @RequestParam("role") role : String) : ResponseEntity<Map<String, Any>>{
+    private fun createUser(@RequestBody createUserAccount: createUserAccount) : ResponseEntity<Map<String,Any>> {
 
-
-        val (status, message) = try {
+        val (status, result) = try {
+            val user = createUserAccount(
+                 firstName = createUserAccount.firstName,
+                    middleName = createUserAccount.middleName ,
+                    lastName = createUserAccount.lastName,
+                    username = createUserAccount.username,
+                    password = createUserAccount.password,
+                    email = createUserAccount.email,
+                    role = createUserAccount.role
+            )
             val registerFlow = proxy.startFlowDynamic(
-                    UserAccountRegisterFlow.Initiator::class.java, firstName, middleName,
-                    lastName, username, password, email, role)
-            val result = registerFlow.use { it.returnValue.getOrThrow() }
-            HttpStatus.CREATED to "Created new UserAccountState"
-        }catch ( e: Exception) {
-            HttpStatus.BAD_REQUEST to "Failed to create UserAccountState"
+                    UserAccountRegisterFlow.Initiator::class.java,
+                    user.firstName,
+                    user.middleName,
+                    user.lastName,
+                    user.username,
+                    user.password,
+                    user.email,
+                    user.role
+            )
+            val out = registerFlow.use { it.returnValue.getOrThrow() }
+            val userStateRef = proxy.vaultQueryBy<UserAccountState>().states.last()
+            val userStateData = userStateRef.state.data
+            val list = userAccountModel(
+                  firstName = userStateData.firstName,
+                    middleName = userStateData.middleName,
+                    lastName = userStateData.lastName,
+                    username = userStateData.username,
+                    password = userStateData.password,
+                    email = userStateData.email,
+                    role = userStateData.role
+            )
+            HttpStatus.CREATED to list
+        }catch (e: Exception){
+            HttpStatus.BAD_REQUEST to "No data"
         }
-        val userStateRef = proxy.vaultQueryBy<UserAccountState>().states.last()
-        val userState = userStateRef.state.data.toJson()
-        val mess = mapOf("status" to status,
-                "message" to message, "result" to userState)
-        return ResponseEntity.status(status).body(mess)
+        val stat = "status" to status
+        val mess = if (status==HttpStatus.CREATED){
+            "message" to "Successful in creating ContractState of type UserAccountState"}
+        else{ "message" to "Failed to create ContractState of type UserAccountState"}
+        val res = "result" to result
+        return ResponseEntity.status(status).body(mapOf(stat,mess,res))
     }
-
 
 
 
