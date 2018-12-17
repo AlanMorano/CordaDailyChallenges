@@ -11,6 +11,7 @@ import net.corda.core.identity.Party
 import net.corda.core.identity.excludeNotary
 import net.corda.core.messaging.vaultQueryBy
 import net.corda.core.utilities.getOrThrow
+import org.apache.commons.beanutils.BeanUtils
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*
 import java.time.LocalDateTime
 import java.time.ZoneId
 import javax.servlet.http.HttpServletRequest
+import javax.ws.rs.PUT
 
 import javax.ws.rs.QueryParam
 import javax.ws.rs.core.MediaType
@@ -31,6 +33,9 @@ import javax.ws.rs.core.Response.ok
 
 import javax.xml.bind.annotation.XmlElement
 import javax.xml.bind.annotation.XmlRootElement
+import org.springframework.web.bind.annotation.PutMapping
+
+
 
 
 
@@ -181,74 +186,124 @@ private const val CONTROLLER_NAME = "config.controller.name"
     }
 
 
-
-    @PostMapping(value = "/register", produces = arrayOf("application/json"))
-    private fun createKYC(
-            @RequestParam("name")name : String,
-            @RequestParam("age")age : Int,
-            @RequestParam("address")address : String,
-            @RequestParam("birthDate")birthDate: String,
-            @RequestParam("status")status : String,
-            @RequestParam("religion")religion : String) : ResponseEntity<Map<String, Any>> {
-
+@PostMapping(value = "/register",produces = arrayOf("application/json"))
+    private fun getRegister(@RequestBody customers: Customers): ResponseEntity<Map<String,Any>> {
         val (status, message) = try {
             val registerFlow = proxy.startFlowDynamic(RegisterFlow::class.java,
-                    name,
-                    age,
-                    address,
-                    birthDate,
-                    status,
-                    religion
+
+                    customers.name,
+                    customers.age,
+                    customers.address,
+                    customers.birthDate,
+                    customers.status,
+                    customers.religion
             )
-            val data = mapOf( "name" to "$name",
-                                                "age" to "$age",
-                                                "address" to "$address",
-                                                "birthDate" to "$birthDate",
-                                                "status" to "$status",
-                                                "religion" to "$religion")
+            val data = mapOf("data Successfully Registered" to customers)
             val result = registerFlow.use { it.returnValue.getOrThrow() }
             HttpStatus.CREATED to data
-        }catch ( ex: Exception) {
+        } catch (ex: Exception) {
             HttpStatus.BAD_REQUEST to "Failed to Register"
         }
-        return ResponseEntity.status(status).body(mapOf("status" to "Successfully Registered!!!", "data inserted" to message))
-    }
+        return ResponseEntity.status(status).body(mapOf( "data" to message))
 
+    }
 
 
     @PutMapping(value = "/update",produces = arrayOf("application/json"))
-    private fun getUpdate(@RequestParam("Id")Id : UniqueIdentifier,
-                          @RequestParam("name")name : String,
-                          @RequestParam("age")age : Int,
-                          @RequestParam("address")address : String,
-                          @RequestParam("birthDate")birthDate: String,
-                          @RequestParam("status")status : String,
-                          @RequestParam("religion")religion : String
-                          ):ResponseEntity<Map<String, Any>>{ val (status, message) = try {
-        val registerFlow = proxy.startFlowDynamic(UpdateFlow::class.java,
-                Id,
-                name,
-                age,
-                address,
-                birthDate,
-                status,
-                religion
-        )
-        val data = mapOf(
-                "name" to "$name",
-                "age" to "$age",
-                "address" to "$address",
-                "birthDate" to "$birthDate",
-                "status" to "$status",
-                "religion" to "$religion")
-        val result = registerFlow.use { it.returnValue.getOrThrow() }
-        HttpStatus.CREATED to data
-    }catch ( ex: Exception) {
-        HttpStatus.BAD_REQUEST to "Failed to Updated"
-    }
-        return ResponseEntity.status(status).body(mapOf("status" to "Successfully Updated!!!", "data updated" to message))
+    private fun getUpdate(@RequestBody customerUpdates: CustomerUpdate): ResponseEntity<Map<String,Any>> {
+        val (status, message) = try {
+
+            val LinearId= UniqueIdentifier.fromString(customerUpdates.Id)
+            val registerFlow = proxy.startFlowDynamic(UpdateFlow::class.java,
+                    LinearId,
+                    customerUpdates.name,
+                    customerUpdates.age,
+                    customerUpdates.address,
+                    customerUpdates.birthDate,
+                    customerUpdates.status,
+                    customerUpdates.religion
+            )
+            val data = mapOf("data successfully updated!!!" to customerUpdates)
+            val result = registerFlow.use { it.returnValue.getOrThrow() }
+            HttpStatus.CREATED to data
+        } catch (ex: Exception) {
+            HttpStatus.BAD_REQUEST to "Failed to Update"
+        }
+        return ResponseEntity.status(status).body(mapOf( "data" to message))
 
     }
+
+
+//    @PostMapping(value = "/register", produces = arrayOf("application/json"))
+//    private fun getRegister(
+//            @RequestParam("name")name : String,
+//            @RequestParam("age")age : Int,
+//            @RequestParam("address")address : String,
+//            @RequestParam("birthDate")birthDate: String,
+//            @RequestParam("status")status : String,
+//            @RequestParam("religion")religion : String) : ResponseEntity<Map<String, Any>> {
+//
+//        val (status, message) = try {
+//            val registerFlow = proxy.startFlowDynamic(RegisterFlow::class.java,
+//                    name,
+//                    age,
+//                    address,
+//                    birthDate,
+//                    status,
+//                    religion
+//            )
+//            val data = mapOf( "name" to "$name",
+//                                                "age" to "$age",
+//                                                "address" to "$address",
+//                                                "birthDate" to "$birthDate",
+//                                                "status" to "$status",
+//                                                "religion" to "$religion")
+//            val result = registerFlow.use { it.returnValue.getOrThrow() }
+//            HttpStatus.CREATED to data
+//        }catch ( ex: Exception) {
+//            HttpStatus.BAD_REQUEST to "Failed to Register"
+//        }
+//        return ResponseEntity.status(status).body(mapOf("status" to "Successfully Registered!!!", "data inserted" to message))
+//    }
+
+
+//
+//    @PutMapping(value = "/update",produces = arrayOf("application/json"))
+//    private fun getUpdate(@RequestParam("Id")Id : UniqueIdentifier,
+//                          @RequestParam("name")name : String,
+//                          @RequestParam("age")age : Int,
+//                          @RequestParam("address")address : String,
+//                          @RequestParam("birthDate")birthDate: String,
+//                          @RequestParam("status")status : String,
+//                          @RequestParam("religion")religion : String
+//                          ):ResponseEntity<Map<String, Any>>{ val (status, message) = try {
+//        val registerFlow = proxy.startFlowDynamic(UpdateFlow::class.java,
+//                Id,
+//                name,
+//                age,
+//                address,
+//                birthDate,
+//                status,
+//                religion
+//        )
+//        val data = mapOf(
+//                "name" to "$name",
+//                "age" to "$age",
+//                "address" to "$address",
+//                "birthDate" to "$birthDate",
+//                "status" to "$status",
+//                "religion" to "$religion")
+//        val result = registerFlow.use { it.returnValue.getOrThrow() }
+//        HttpStatus.CREATED to data
+//    }catch ( ex: Exception) {
+//        HttpStatus.BAD_REQUEST to "Failed to Updated"
+//    }
+//        return ResponseEntity.status(status).body(mapOf("status" to "Successfully Updated!!!", "data updated" to message))
+//
+//    }
+
+
+
 
 
 
