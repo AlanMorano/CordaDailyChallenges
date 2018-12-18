@@ -4,15 +4,17 @@ import net.corda.core.contracts.*
 import net.corda.core.identity.Party
 import net.corda.core.transactions.LedgerTransaction
 
-class AccountContract : Contract {
+class UserContract : Contract {
     companion object {
         // Used to identify our contract when building a transaction.
-        const val Account_Contract_ID = "com.template.UserContract"
+        const val User_Contract_ID = "com.template.UserContract"
     }
 
     // Used to indicate the transaction's intent.
     interface Commands : CommandData {
-        class UserAccount : Commands
+        class Register : Commands
+        class Update : Commands
+        class Verify : Commands
     }
 
     // A transaction is valid if the verify() function of the contract of all the transaction's input and output states
@@ -23,7 +25,9 @@ class AccountContract : Contract {
 
         requireThat {
             when(command.value){
-                is Commands.UserAccount -> {}
+                is Commands.Register -> {}
+                is Commands.Update -> {}
+                is Commands.Verify -> {}
                 else -> {}
             }
 
@@ -34,7 +38,7 @@ class AccountContract : Contract {
 // *********
 // * State *
 // *********
-data class AccountState (val Node: Party,
+data class UserState (val Node: Party,
                          val Username: String,
                          val Password: String,
                          val Firstname: String,

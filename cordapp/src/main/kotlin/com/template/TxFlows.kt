@@ -1,7 +1,7 @@
 package com.template
 
 import co.paralleluniverse.fibers.Suspendable
-import com.template.GetContract.Companion.Get_Contract_ID
+import com.template.RequestContract.Companion.Request_Contract_ID
 import net.corda.core.contracts.Command
 import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.flows.*
@@ -14,8 +14,8 @@ import net.corda.core.utilities.ProgressTracker
 
 @InitiatingFlow
 @StartableByRPC
-class RequestFlow ( val owningParty: Party,
-                    val IdState: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
+class KYCRequestFlow ( val owningParty: String,
+                       val IdState: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker(
             GENERATING_TRANSACTION,
@@ -31,15 +31,19 @@ class RequestFlow ( val owningParty: Party,
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
+        //Searching the serviceHub for the input Owner and gets it if it has a match, else, throw exc
+        val OwnerRef = serviceHub.identityService.partiesFromName(owningParty, false).singleOrNull()
+                ?: throw IllegalArgumentException("No match found for Owner $owningParty.")
+
         // request to other party
-        val requester = GetState(owningParty,ourIdentity,IdState)
+        val requester = RequestState(OwnerRef,ourIdentity,IdState)
 
         // valid or invalid in contract
-        val cmd = Command (GetContract.Commands.Request(), ourIdentity.owningKey)
+        val cmd = Command (RequestContract.Commands.Request(), ourIdentity.owningKey)
 
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
-                .addOutputState(requester, Get_Contract_ID)
+                .addOutputState(requester, Request_Contract_ID)
                 .addCommand(cmd)
 
         progressTracker.currentStep = VERIFYING_TRANSACTION
@@ -60,7 +64,7 @@ class RequestFlow ( val owningParty: Party,
 
 @InitiatingFlow
 @StartableByRPC
-class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
+class KYCShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker(
             GENERATING_TRANSACTION,
@@ -74,17 +78,17 @@ class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>()
 
         progressTracker.currentStep = GENERATING_TRANSACTION
 
-        // Initiator flow logic goes here from GetState
+        // Initiator flow logic goes here from RequestState
         val requestCriteria = QueryCriteria.VaultQueryCriteria()
 
-        //verify the request by using requestFlow (GetState)
-        val requestVault = serviceHub.vaultService.queryBy<GetState>(requestCriteria).states
+        //verify the request by using requestFlow (RequestState)
+        val requestVault = serviceHub.vaultService.queryBy<RequestState>(requestCriteria).states
 
-        // Initiator flow logic goes here from UserState
+        // Initiator flow logic goes here from KYCState
         val userCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
 
-        //get the information from UserState owning Party
-        val userVault = serviceHub.vaultService.queryBy<UserState>(userCriteria).states.first()
+        //get the information from KYCState owning Party
+        val userVault = serviceHub.vaultService.queryBy<KYCState>(userCriteria).states.first()
         val user = userVault.state.data
 
         //add all the participants in parties
@@ -97,7 +101,7 @@ class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>()
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         // belong to the transaction
-        val outputState = UserState(
+        val outputState = KYCState(
                 ourIdentity,
                 user.Name,
                 user.Age,
@@ -111,12 +115,12 @@ class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>()
         )
 
         // valid or invalid in contract
-        val cmd = Command(GetContract.Commands.Request(), ourIdentity.owningKey)
+        val cmd = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
 
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
                 .addInputState(userVault)
-                .addOutputState(outputState,Get_Contract_ID)
+                .addOutputState(outputState,Request_Contract_ID)
                 .addCommand(cmd)
 
         for(state in requestVault) {                    //search in the requestVault
@@ -140,7 +144,7 @@ class ShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>()
 }
 @InitiatingFlow
 @StartableByRPC
-class RemoveFlow(   val OwnParty: Party,
+class KYCRemoveFlow(val OwnParty: Party,
                     val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker(
@@ -158,11 +162,11 @@ class RemoveFlow(   val OwnParty: Party,
         //verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
-        // Initiator flow logic goes here from UserState
+        // Initiator flow logic goes here from KYCState
         val userCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
 
         //get the information from UserState owning Party
-        val userVault = serviceHub.vaultService.queryBy<UserState>(userCriteria).states.first()
+        val userVault = serviceHub.vaultService.queryBy<KYCState>(userCriteria).states.first()
         val user = userVault.state.data
 
         //add all the participants in parties
@@ -173,7 +177,7 @@ class RemoveFlow(   val OwnParty: Party,
         parties.remove(OwnParty)
 
         // belong to the transaction
-        val outputState = UserState(
+        val outputState = KYCState(
                 ourIdentity,
                 user.Name,
                 user.Age,
@@ -187,12 +191,12 @@ class RemoveFlow(   val OwnParty: Party,
         )
 
         // valid or invalid in contract
-        val cmd = Command(GetContract.Commands.Request(), ourIdentity.owningKey)
+        val cmd = Command(RequestContract.Commands.Request(), ourIdentity.owningKey)
 
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
                 .addInputState(userVault)
-                .addOutputState(outputState,Get_Contract_ID)
+                .addOutputState(outputState,Request_Contract_ID)
                 .addCommand(cmd)
 
         progressTracker.currentStep = VERIFYING_TRANSACTION

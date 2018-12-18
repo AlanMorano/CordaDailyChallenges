@@ -15,7 +15,7 @@ import net.corda.core.utilities.ProgressTracker
 
 @InitiatingFlow
 @StartableByRPC
-class AccountFlow ( val Username : String,
+class UserRegisterFlow ( val Username : String,
                     val Password : String,
                     val Firstname : String,
                     val Lastname : String,
@@ -38,14 +38,14 @@ class AccountFlow ( val Username : String,
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
         // belong to the transaction
-        val outputState = AccountState(ourIdentity,Username,Password,Firstname, Lastname,Email,Number, listOf(ourIdentity))
+        val outputState = UserState(ourIdentity,Username,Password,Firstname, Lastname,Email,Number, listOf(ourIdentity))
 
         // valid or invalid in contract
-        val cmd = Command(AccountContract.Commands.UserAccount(),ourIdentity.owningKey)
+        val cmd = Command(UserContract.Commands.Register(),ourIdentity.owningKey)
 
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
-                .addOutputState(outputState, AccountContract.Account_Contract_ID)
+                .addOutputState(outputState, UserContract.User_Contract_ID)
                 .addCommand(cmd)
 
         progressTracker.currentStep = VERIFYING_TRANSACTION
@@ -65,7 +65,7 @@ class AccountFlow ( val Username : String,
 
 @InitiatingFlow
 @StartableByRPC
-class UpdateAccountFlow ( val Firstname: String,
+class UserUpdateFlow ( val Firstname: String,
                    val Lastname: String,
                    val Email: String,
                    val Number: Int,
@@ -88,7 +88,7 @@ class UpdateAccountFlow ( val Firstname: String,
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
         //get the information from UserState
-        val Vault = serviceHub.vaultService.queryBy<AccountState>(criteria).states.first()
+        val Vault = serviceHub.vaultService.queryBy<UserState>(criteria).states.first()
         val input = Vault.state.data
 
         //if you like to name of your verification/identity of the user
@@ -97,7 +97,7 @@ class UpdateAccountFlow ( val Firstname: String,
 //            throw IllegalArgumentException("Invalid Name") }
 
         // belong to the transaction
-        val outputState = AccountState(ourIdentity,input.Username,input.Password,Firstname,Lastname,Email,Number,
+        val outputState = UserState(ourIdentity,input.Username,input.Password,Firstname,Lastname,Email,Number,
                 listOf(ourIdentity), input.linearId)
 
         // valid or invalid in contract

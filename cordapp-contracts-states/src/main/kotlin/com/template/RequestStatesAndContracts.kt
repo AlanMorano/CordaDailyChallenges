@@ -7,10 +7,10 @@ import net.corda.core.transactions.LedgerTransaction
 // ************
 // * Contract *
 // ************
-class GetContract : Contract {
+class RequestContract : Contract {
     companion object {
         // Used to identify our contract when building a transaction.
-        const val Get_Contract_ID = "com.template.GetContract"
+        const val Request_Contract_ID = "com.template.RequestContract"
     }
 
     // Used to indicate the transaction's intent.
@@ -29,17 +29,10 @@ class GetContract : Contract {
         requireThat {
             when(command.value){
                 is Commands.Request ->{
-
-                    "Transaction must have one output" using (tx.outputs.size == 1)
                 }
-
                 is Commands.Share ->{
-
-                    "Transaction must have one output" using (tx.outputs.size == 1)
                 }
                 is Commands.Remove ->{
-
-                    "Transaction must have one output" using (tx.outputs.size == 1)
                 }
             }
         }
@@ -51,7 +44,7 @@ class GetContract : Contract {
 // * State *
 // *********
 
-data class GetState (val ownNode: Party,
+data class RequestState (val ownNode: Party,
                      val requestNode: Party,
                      val IdState: UniqueIdentifier) : ContractState {
 
