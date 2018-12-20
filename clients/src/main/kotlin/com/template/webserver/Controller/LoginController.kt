@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
  * Define your API endpoints here.
  */
 @RestController
-@RequestMapping("/") // The paths for HTTP requests are relative to this base path.
+@RequestMapping("/Admin") // The paths for HTTP requests are relative to this base path.
 class LoginController(
         private val rpc: NodeRPCConnection) {
 
@@ -47,14 +47,14 @@ class LoginController(
 
             ResponseEntity.ok().body(
                     mapOf(
-                            "status" to "success",
-                            "message" to "Successful Log-in",
+                            "status" to "Success",
+                            "message" to "Log-in Successful",
                             "result" to result))
         } else {
             ResponseEntity.badRequest().body(
                     mapOf(
-                            "status" to "failed",
-                            "message" to "Failed to login",
+                            "status" to "Failed",
+                            "message" to "Log-in Failed",
                             "result" to "[]")
             )
         }

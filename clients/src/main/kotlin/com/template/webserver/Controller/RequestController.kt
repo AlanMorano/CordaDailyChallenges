@@ -1,23 +1,18 @@
 package com.template.webserver.Controller
 
-import com.template.KYCRegisterFlow
+
 import com.template.KYCRequestFlow
-import com.template.KYCState
 import com.template.RequestState
-import com.template.webserver.NewRegsKYC
+import com.template.webserver.GetRequest
 import com.template.webserver.NewRegsRequest
 import com.template.webserver.NodeRPCConnection
-import net.corda.client.jackson.JacksonSupport
 import net.corda.core.contracts.UniqueIdentifier
-import net.corda.core.identity.Party
 import net.corda.core.messaging.vaultQueryBy
 import net.corda.core.utilities.getOrThrow
 import net.corda.core.utilities.loggerFor
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.lang.IllegalArgumentException
-import java.security.acl.Owner
 
 /**
  * Define your API endpoints here.
@@ -31,7 +26,7 @@ class RequestController(
         private val logger = loggerFor<RequestController>()
     }
 
-    /** Return all the Users of RequestStates **/
+    /** Return all the Request of RequestStates **/
     @GetMapping(value = "/Request", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     private fun requeststate(): Map<String, Any> {
 
@@ -44,12 +39,49 @@ class RequestController(
                     "linearId"      to  it.IdState.toString()
             )
         }
-        val status = "status" to "success"
-        val message = "message" to "Successful in getting all GetState"
+        val status = "status" to "Success"
+        val message = "message" to "Successful in Returning All RequestState"
         return mapOf(status, message, "result" to list)
     }
 
-    /** Register New User in RequestState **/
+    /** Return one of the Request of RequestStates **/
+    @GetMapping(value = "/Users/{Id}", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
+    private fun requestUser(@PathVariable("Id") linearID : String,@RequestBody getRequest: GetRequest): ResponseEntity<Map<String,Any>> {
+
+
+        val uniqueID = UniqueIdentifier.fromString(linearID)
+        val flowHandle = rpc.proxy.vaultQueryBy<RequestState>().states
+        val data = flowHandle.find { stateAndRef ->
+            stateAndRef.state.data.IdState == uniqueID
+        }
+
+        return if (data != null) {
+            getRequest.Owner = data.state.data.ownNode.toString()
+            getRequest.Request = data.state.data.requestNode.toString()
+            getRequest.ID = data.state.data.IdState.id.toString()
+
+            val list = mapOf(
+                    "Owner"     to  getRequest.Owner,
+                    "Requester" to  getRequest.Request,
+                    "ID"        to getRequest.ID
+            )
+
+            ResponseEntity.ok().body(
+                    mapOf(
+                            "status" to "Success",
+                            "message" to "Successful Returning Request's Information",
+                            "result" to list))
+        } else {
+            ResponseEntity.badRequest().body(
+                    mapOf(
+                            "status" to "Failed",
+                            "message" to "Failed in Returning Request's Information",
+                            "result" to "[]")
+            )
+        }
+    }
+
+    /** Register New Request in RequestState **/
     @PostMapping(value = "/Register", produces = arrayOf(MediaType.APPLICATION_JSON_VALUE))
     private fun requestregister(@RequestBody regsRequest: NewRegsRequest): ResponseEntity<Map<String, Any>> {
 
@@ -71,22 +103,23 @@ class RequestController(
             val flowResult = mapOf(
                     "Owner"             to  requestState.ownNode.toString(),
                     "Requestor"         to  requestState.requestNode.toString(),
-                    "linearID"                to  requestState.IdState.toString(),
+                    "linearID"          to  requestState.IdState.toString(),
                     "listOfParties"     to  requestState.participants.toString(),
                     "Transaction ID"    to  result.id.toString()
             )
 
             ResponseEntity.ok().body(
                     mapOf(
-                            "status" to "success",
-                            "message" to "Successful Registered",
-                            "result" to flowResult))
+                            "status" to "Success",
+                            "message" to "Register Successful",
+                            "result" to flowResult)
+            )
         } catch (ex: Exception) {
 
             ResponseEntity.badRequest().body(
                     mapOf(
                             "status" to "Failed",
-                            "message" to "Failed to Request KYC users",
+                            "message" to "Register Failed",
                             "result" to "[]")
             )
         }

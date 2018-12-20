@@ -132,7 +132,8 @@ class KYCUpdateFlow ( val Name: String,
 
 @InitiatingFlow
 @StartableByRPC
-class KYCVerifyFlow (val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
+class KYCVerifyFlow (   val OwnParty: String,
+                        val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker(
             GENERATING_TRANSACTION,
@@ -148,6 +149,10 @@ class KYCVerifyFlow (val linearId: UniqueIdentifier) : FlowLogic<SignedTransacti
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
+        //Search in servicehub in the map all the parties listed and change the string in a Party
+        val OwnerRef = serviceHub.identityService.partiesFromName(OwnParty, false).singleOrNull()
+                ?: throw IllegalArgumentException("No match found for Owner $OwnParty.")
+
         // Initiator flow logic goes here.
         val criteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
 
@@ -156,7 +161,7 @@ class KYCVerifyFlow (val linearId: UniqueIdentifier) : FlowLogic<SignedTransacti
         val input = Vault.state.data
 
         // belong to the transaction
-        val outputState = KYCState(ourIdentity,input.Name,input.Age,
+        val outputState = KYCState(OwnerRef,input.Name,input.Age,
                 input.Address,input.BirthDate,input.Status,input.Religion,
                 listOf(ourIdentity),true,input.linearId)
 

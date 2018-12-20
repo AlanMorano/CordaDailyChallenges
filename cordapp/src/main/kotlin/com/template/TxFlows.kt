@@ -31,7 +31,7 @@ class KYCRequestFlow ( val owningParty: String,
         // verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
-        //Searching the serviceHub for the input Owner and gets it if it has a match, else, throw exc
+        //Search in servicehub in the map all the parties listed and change the string in a Party
         val OwnerRef = serviceHub.identityService.partiesFromName(owningParty, false).singleOrNull()
                 ?: throw IllegalArgumentException("No match found for Owner $owningParty.")
 
@@ -64,7 +64,8 @@ class KYCRequestFlow ( val owningParty: String,
 
 @InitiatingFlow
 @StartableByRPC
-class KYCShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
+class KYCShareFlow( val owningParty: String,
+                    val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
     override val progressTracker = ProgressTracker(
             GENERATING_TRANSACTION,
@@ -85,33 +86,37 @@ class KYCShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction
         val requestVault = serviceHub.vaultService.queryBy<RequestState>(requestCriteria).states
 
         // Initiator flow logic goes here from KYCState
-        val userCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
+        val kycCriteria = QueryCriteria.LinearStateQueryCriteria(linearId = listOf(linearId))
 
         //get the information from KYCState owning Party
-        val userVault = serviceHub.vaultService.queryBy<KYCState>(userCriteria).states.first()
-        val user = userVault.state.data
+        val kycVault = serviceHub.vaultService.queryBy<KYCState>(kycCriteria).states.single()
+        val kyc = kycVault.state.data
 
         //add all the participants in parties
         val parties = mutableListOf<Party>()
-        for (data in user.participants){            //search all the participant in the vault
+        for (data in kyc.participants){            //search all the participant in the vault
             parties.add(data)                       //add the participants in the parties
         }
 
         //verify notary
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
 
+        //Search in servicehub in the map all the parties listed and change the string in a Party
+        val OwnerRef = serviceHub.identityService.partiesFromName(owningParty, false).singleOrNull()
+                ?: throw IllegalArgumentException("No match found for Owner $owningParty.")
+
         // belong to the transaction
         val outputState = KYCState(
-                ourIdentity,
-                user.Name,
-                user.Age,
-                user.Address,
-                user.BirthDate,
-                user.Status,
-                user.Religion,
+                OwnerRef,
+                kyc.Name,
+                kyc.Age,
+                kyc.Address,
+                kyc.BirthDate,
+                kyc.Status,
+                kyc.Religion,
                 parties,
-                user.isVerified,
-                user.linearId
+                kyc.isVerified,
+                kyc.linearId
         )
 
         // valid or invalid in contract
@@ -119,13 +124,15 @@ class KYCShareFlow(val linearId: UniqueIdentifier) : FlowLogic<SignedTransaction
 
         //add transaction Builder
         val txBuilder = TransactionBuilder(notary)
-                .addInputState(userVault)
+                .addInputState(kycVault)
                 .addOutputState(outputState,Request_Contract_ID)
                 .addCommand(cmd)
 
         for(state in requestVault) {                    //search in the requestVault
-            parties.add(state.state.data.requestNode)   //add requestNode in the parties
-            txBuilder.addInputState(state)
+            if (state.state.data.IdState == linearId) {
+                parties.add(state.state.data.requestNode)   //add requestNode in the parties
+                txBuilder.addInputState(state)
+            }
         }
 
         progressTracker.currentStep = VERIFYING_TRANSACTION
