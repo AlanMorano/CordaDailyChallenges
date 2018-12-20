@@ -20,7 +20,9 @@ import net.corda.core.utilities.ProgressTracker
 
 @InitiatingFlow
 @StartableByRPC
-class ApprovedFlow(private  val Id: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
+class ApprovedFlow(
+        private val requestParty: Party,
+        private val Id: UniqueIdentifier) : FlowLogic<SignedTransaction>(){
 
 
 
@@ -65,7 +67,7 @@ class ApprovedFlow(private  val Id: UniqueIdentifier) : FlowLogic<SignedTransact
 
         val notary = serviceHub.networkMapCache.notaryIdentities.first()
         val outputState = UserState(
-                ourIdentity,
+                requestParty,
                 user.name,
                 user.age,
                 user.address,
@@ -87,6 +89,7 @@ class ApprovedFlow(private  val Id: UniqueIdentifier) : FlowLogic<SignedTransact
 
         /* Step 2 - Verify the transaction */
         progressTracker.currentStep = VERIFY_TRANSACTION
+
         for(state in inputRequestStateAndRef) {
             if (state.state.data.Id == Id) {
                 participants.add(state.state.data.requestParty)

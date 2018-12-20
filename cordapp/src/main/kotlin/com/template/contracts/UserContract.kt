@@ -100,6 +100,10 @@ class UserContract : Contract {
 
                 }
 
+                is Commands.Approved ->{
+
+                }
+
             }
         }
     }

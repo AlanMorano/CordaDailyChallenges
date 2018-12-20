@@ -21,7 +21,7 @@ import java.lang.IllegalArgumentException
 
 @InitiatingFlow
 @StartableByRPC
-class RequestFlow(private val OtherParty: Party ,
+class RequestFlow(private val OtherParty: Party,
                   private val Id: UniqueIdentifier): FlowLogic<SignedTransaction>(){
 
 
